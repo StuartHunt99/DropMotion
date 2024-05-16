@@ -32,6 +32,26 @@
         .drop-cell.dragover {
             background-color: #e0e0e0;
         }
+        .file-path {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            direction: rtl;
+            text-align: left;
+            position: relative; /* Updated to enable absolute positioning of tooltip */
+        }
+        .file-path:hover::after {
+            content: attr(data-full-path);
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            padding: 5px;
+            z-index: 1000;
+            white-space: nowrap;
+            right: 0; /* Position tooltip within view */
+            transform: translateX(100%); /* Move tooltip to the left of the element */
+        }
         #save-button {
             padding: 10px 20px;
             font-size: 16px;
@@ -44,13 +64,23 @@
         #save-button:hover {
             background-color: #0056b3;
         }
+        .thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+        }
     </style>
 </head>
 <body>
 
 <table id="csv-table">
     <thead>
-        <tr id="csv-header"></tr>
+        <tr id="csv-header">
+            <th>Marker Number</th>
+            <th>Marker Timecode</th>
+            <th>Caption</th>
+            <th>File Path</th>
+            <th>Preview</th>
+        </tr>
     </thead>
     <tbody id="csv-body"></tbody>
 </table>
@@ -61,59 +91,67 @@
     document.addEventListener('DOMContentLoaded', async () => {
         try {
             const results = await window.electron.readCSV();
-            const tableHeader = document.getElementById('csv-header');
             const tableBody = document.getElementById('csv-body');
 
-            if (results.length > 0) {
-                // Create table headers
-                Object.keys(results[0]).forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    tableHeader.appendChild(th);
+            results.forEach(row => {
+                const tr = document.createElement('tr');
+
+                const markerNumberTd = document.createElement('td');
+                markerNumberTd.textContent = row['Marker Number'];
+                tr.appendChild(markerNumberTd);
+
+                const markerTimecodeTd = document.createElement('td');
+                markerTimecodeTd.textContent = row['Marker Timecode'];
+                tr.appendChild(markerTimecodeTd);
+
+                const captionTd = document.createElement('td');
+                captionTd.textContent = row['Closest Transcript Segment'];
+                tr.appendChild(captionTd);
+
+                const filePathTd = document.createElement('td');
+                filePathTd.classList.add('file-path');
+                tr.appendChild(filePathTd);
+
+                const previewTd = document.createElement('td');
+                previewTd.classList.add('drop-cell');
+                previewTd.textContent = 'Drop image here';
+                tr.appendChild(previewTd);
+
+                tableBody.appendChild(tr);
+
+                // Add drag-and-drop event listeners to the preview cell
+                previewTd.addEventListener('dragover', (event) => {
+                    event.preventDefault();
+                    previewTd.classList.add('dragover');
                 });
 
-                const th = document.createElement('th');
-                th.textContent = 'File Path';
-                tableHeader.appendChild(th);
-
-                // Create table rows
-                results.forEach(row => {
-                    const tr = document.createElement('tr');
-                    Object.values(row).forEach(value => {
-                        const td = document.createElement('td');
-                        td.textContent = value;
-                        tr.appendChild(td);
-                    });
-
-                    const td = document.createElement('td');
-                    td.classList.add('drop-cell');
-                    td.textContent = 'Drop file here';
-                    tr.appendChild(td);
-
-                    tableBody.appendChild(tr);
+                previewTd.addEventListener('dragleave', () => {
+                    previewTd.classList.remove('dragover');
                 });
 
-                // Add drag-and-drop event listeners to all drop cells
-                document.querySelectorAll('.drop-cell').forEach(cell => {
-                    cell.addEventListener('dragover', (event) => {
-                        event.preventDefault();
-                        cell.classList.add('dragover');
-                    });
+                previewTd.addEventListener('drop', (event) => {
+                    event.preventDefault();
+                    previewTd.classList.remove('dragover');
+                    const file = event.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const img = document.createElement('img');
+                            img.src = e.target.result;
+                            img.classList.add('thumbnail');
+                            previewTd.innerHTML = '';
+                            previewTd.appendChild(img);
 
-                    cell.addEventListener('dragleave', () => {
-                        cell.classList.remove('dragover');
-                    });
-
-                    cell.addEventListener('drop', (event) => {
-                        event.preventDefault();
-                        cell.classList.remove('dragover');
-                        const file = event.dataTransfer.files[0];
-                        if (file) {
-                            cell.textContent = file.path;
-                        }
-                    });
+                            // Update the adjacent file path cell
+                            filePathTd.textContent = file.path;
+                            filePathTd.setAttribute('data-full-path', file.path);
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        alert('Please drop an image file.');
+                    }
                 });
-            }
+            });
         } catch (error) {
             console.error('Error reading CSV:', error);
         }
@@ -123,11 +161,19 @@
         const rows = document.querySelectorAll('#csv-table tr');
         const csvData = [];
 
+        // Add header row only once
+        csvData.push('Marker Number,Marker Timecode,File Path');
+
         rows.forEach(row => {
-            const cols = row.querySelectorAll('th, td');
-            const rowData = [];
-            cols.forEach(col => rowData.push(col.textContent));
-            csvData.push(rowData.join(','));
+            const markerNumber = row.cells[0].textContent;
+            const markerTimecode = row.cells[1].textContent;
+            const filePath = row.cells[3].textContent;
+
+            // Ensure not to include the header row again
+            if (markerNumber !== 'Marker Number' && markerTimecode && filePath) {
+                const rowData = [markerNumber, markerTimecode, filePath];
+                csvData.push(rowData.join(','));
+            }
         });
 
         const csvContent = csvData.join('\n');
