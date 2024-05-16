@@ -31,10 +31,22 @@ ipcMain.on('save-csv', async (event, data) => {
     }
 });
 
+ipcMain.on('save-json', async (event, data) => {
+    const { filePath } = await dialog.showSaveDialog({
+        title: 'Save JSON',
+        defaultPath: path.join(__dirname, 'updated_spreadsheet.json'),
+        filters: [{ name: 'JSON Files', extensions: ['json'] }]
+    });
+
+    if (filePath) {
+        fs.writeFileSync(filePath, data);
+    }
+});
+
 function createWindow() {
     const win = new BrowserWindow({
         width: 1200,
-        height: 800,
+        height: 600,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
