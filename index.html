@@ -23,6 +23,7 @@
             border: 1px solid #007bff;
             padding: 8px;
             text-align: center;
+            position: relative; /* Added to contain the X button */
         }
         .drop-cell {
             border: 2px dashed #007bff;
@@ -39,7 +40,7 @@
             text-overflow: ellipsis;
             direction: rtl;
             text-align: left;
-            position: relative; /* Updated to enable absolute positioning of tooltip */
+            position: relative; /* Enable absolute positioning of tooltip */
         }
         .file-path:hover::after {
             content: attr(data-full-path);
@@ -67,6 +68,25 @@
         .thumbnail {
             max-width: 100px;
             max-height: 100px;
+        }
+        .delete-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 2px 5px;
+            font-size: 12px;
+            display: none; /* Initially hidden */
+        }
+        .drop-cell img {
+            display: block;
+            margin: 0 auto 5px;
+        }
+        .drop-cell:hover .delete-btn {
+            display: block; /* Show when hovering over the drop cell */
         }
     </style>
 </head>
@@ -142,9 +162,21 @@
                             previewTd.innerHTML = '';
                             previewTd.appendChild(img);
 
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.textContent = 'X';
+                            deleteBtn.classList.add('delete-btn');
+                            previewTd.appendChild(deleteBtn);
+
                             // Update the adjacent file path cell
                             filePathTd.textContent = file.path;
                             filePathTd.setAttribute('data-full-path', file.path);
+
+                            // Add click event listener to the delete button
+                            deleteBtn.addEventListener('click', () => {
+                                previewTd.innerHTML = 'Drop image here';
+                                filePathTd.textContent = '';
+                                filePathTd.removeAttribute('data-full-path');
+                            });
                         };
                         reader.readAsDataURL(file);
                     } else {
@@ -170,8 +202,8 @@
             const filePath = row.cells[3].textContent;
 
             // Ensure not to include the header row again
-            if (markerNumber !== 'Marker Number' && markerTimecode && filePath) {
-                const rowData = [markerNumber, markerTimecode, filePath];
+            if (markerNumber !== 'Marker Number' && markerTimecode) {
+                const rowData = [markerNumber, markerTimecode, filePath || ''];
                 csvData.push(rowData.join(','));
             }
         });
