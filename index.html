@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Drag and Drop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 80%;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #007bff;
+            padding: 8px;
+            text-align: center;
+        }
+        .drop-cell {
+            border: 2px dashed #007bff;
+            color: #007bff;
+            transition: background-color 0.3s;
+        }
+        .drop-cell.dragover {
+            background-color: #e0e0e0;
+        }
+        #save-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #save-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<table id="csv-table">
+    <thead>
+        <tr id="csv-header"></tr>
+    </thead>
+    <tbody id="csv-body"></tbody>
+</table>
+
+<button id="save-button">Save CSV</button>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const results = await window.electron.readCSV();
+            const tableHeader = document.getElementById('csv-header');
+            const tableBody = document.getElementById('csv-body');
+
+            if (results.length > 0) {
+                // Create table headers
+                Object.keys(results[0]).forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    tableHeader.appendChild(th);
+                });
+
+                const th = document.createElement('th');
+                th.textContent = 'File Path';
+                tableHeader.appendChild(th);
+
+                // Create table rows
+                results.forEach(row => {
+                    const tr = document.createElement('tr');
+                    Object.values(row).forEach(value => {
+                        const td = document.createElement('td');
+                        td.textContent = value;
+                        tr.appendChild(td);
+                    });
+
+                    const td = document.createElement('td');
+                    td.classList.add('drop-cell');
+                    td.textContent = 'Drop file here';
+                    tr.appendChild(td);
+
+                    tableBody.appendChild(tr);
+                });
+
+                // Add drag-and-drop event listeners to all drop cells
+                document.querySelectorAll('.drop-cell').forEach(cell => {
+                    cell.addEventListener('dragover', (event) => {
+                        event.preventDefault();
+                        cell.classList.add('dragover');
+                    });
+
+                    cell.addEventListener('dragleave', () => {
+                        cell.classList.remove('dragover');
+                    });
+
+                    cell.addEventListener('drop', (event) => {
+                        event.preventDefault();
+                        cell.classList.remove('dragover');
+                        const file = event.dataTransfer.files[0];
+                        if (file) {
+                            cell.textContent = file.path;
+                        }
+                    });
+                });
+            }
+        } catch (error) {
+            console.error('Error reading CSV:', error);
+        }
+    });
+
+    document.getElementById('save-button').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#csv-table tr');
+        const csvData = [];
+
+        rows.forEach(row => {
+            const cols = row.querySelectorAll('th, td');
+            const rowData = [];
+            cols.forEach(col => rowData.push(col.textContent));
+            csvData.push(rowData.join(','));
+        });
+
+        const csvContent = csvData.join('\n');
+        window.electron.saveCSV(csvContent);
+    });
+</script>
+
+</body>
+</html>
