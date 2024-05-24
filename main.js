@@ -2,49 +2,53 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const csv = require('csv-parser');
+const { exec } = require('child_process');  // Import exec from child_process
 
-ipcMain.handle('read-csv', async () => {
+ipcMain.handle('read-csv', async (event) => {
     const results = [];
     const filePath = path.join(__dirname, 'output_spreadsheet.csv');
     return new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
             .pipe(csv())
             .on('data', (data) => results.push(data))
-            .on('end', () => resolve(results))
-            .on('error', (error) => reject(error));
+            .on('end', () => {
+                resolve(results);
+            })
+            .on('error', (error) => {
+                reject(error);
+            });
     });
 });
 
 ipcMain.on('save-csv', async (event, data) => {
-    try {
-        const { filePath } = await dialog.showSaveDialog({
-            title: 'Save CSV',
-            defaultPath: path.join(__dirname, 'updated_spreadsheet.csv'),
-            filters: [{ name: 'CSV Files', extensions: ['csv'] }]
-        });
+    const { filePath } = await dialog.showSaveDialog({
+        title: 'Save CSV',
+        defaultPath: path.join(__dirname, 'updated_spreadsheet.csv'),
+        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
+    });
 
-        if (filePath) {
-            fs.writeFileSync(filePath, data);
-        }
-    } catch (error) {
-        console.error('Error saving CSV:', error);
+    if (filePath) {
+        fs.writeFileSync(filePath, data);
     }
 });
 
 ipcMain.on('save-json', async (event, data) => {
-    try {
-        const { filePath } = await dialog.showSaveDialog({
-            title: 'Save JSON',
-            defaultPath: path.join(__dirname, 'updated_spreadsheet.json'),
-            filters: [{ name: 'JSON Files', extensions: ['json'] }]
-        });
+    const savePath = path.join(__dirname, 'xml-updater', 'updated_spreadsheet.json');
+    
+    fs.writeFileSync(savePath, data);
 
-        if (filePath) {
-            fs.writeFileSync(filePath, data);
+    // Run the Python script after saving the JSON file
+    exec('python3 xml-updater/xml-updater.py', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing Python script: ${error.message}`);
+            return;
         }
-    } catch (error) {
-        console.error('Error saving JSON:', error);
-    }
+        if (stderr) {
+            console.error(`Python script stderr: ${stderr}`);
+            return;
+        }
+        console.log(`Python script stdout: ${stdout}`);
+    });
 });
 
 function createWindow() {
@@ -60,10 +64,6 @@ function createWindow() {
     });
 
     win.loadFile('index.html');
-
-    win.on('closed', () => {
-        win = null;
-    });
 }
 
 app.whenReady().then(() => {
