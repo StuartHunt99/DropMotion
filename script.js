@@ -27,6 +27,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             previewTd.textContent = 'Drop image here';
             tr.appendChild(previewTd);
 
+            const zoomTd = document.createElement('td');
+            const zoomToggleBtn = document.createElement('button');
+            zoomToggleBtn.textContent = 'Zoom In';
+            zoomToggleBtn.classList.add('toggle-btn');
+            zoomToggleBtn.dataset.state = 'zoom_in';
+            zoomToggleBtn.addEventListener('click', () => {
+                if (zoomToggleBtn.dataset.state === 'zoom_in') {
+                    zoomToggleBtn.textContent = 'Zoom Out';
+                    zoomToggleBtn.dataset.state = 'zoom_out';
+                    zoomToggleBtn.classList.add('red');
+                } else {
+                    zoomToggleBtn.textContent = 'Zoom In';
+                    zoomToggleBtn.dataset.state = 'zoom_in';
+                    zoomToggleBtn.classList.remove('red');
+                }
+            });
+            zoomTd.appendChild(zoomToggleBtn);
+            tr.appendChild(zoomTd);
+
+            const speedTd = document.createElement('td');
+            const speedToggleBtn = document.createElement('button');
+            speedToggleBtn.textContent = 'Slow';
+            speedToggleBtn.classList.add('toggle-btn');
+            speedToggleBtn.dataset.state = 'slow';
+            speedToggleBtn.addEventListener('click', () => {
+                if (speedToggleBtn.dataset.state === 'slow') {
+                    speedToggleBtn.textContent = 'Fast';
+                    speedToggleBtn.dataset.state = 'fast';
+                    speedToggleBtn.classList.add('red');
+                } else {
+                    speedToggleBtn.textContent = 'Slow';
+                    speedToggleBtn.dataset.state = 'slow';
+                    speedToggleBtn.classList.remove('red');
+                }
+            });
+            speedTd.appendChild(speedToggleBtn);
+            tr.appendChild(speedTd);
+
             tableBody.appendChild(tr);
 
             previewTd.addEventListener('dragover', (event) => {
@@ -80,15 +118,17 @@ document.getElementById('save-button').addEventListener('click', () => {
     const rows = document.querySelectorAll('#csv-table tr');
     const csvData = [];
 
-    csvData.push('Marker Number,Marker Timecode,File Path');
+    csvData.push('Marker Number,Marker Timecode,File Path,Zoom,Speed');
 
     rows.forEach(row => {
-        const markerNumber = row.cells[0].textContent;
-        const markerTimecode = row.cells[1].textContent;
-        const filePath = row.cells[3].textContent;
+        const markerNumber = row.cells[0]?.textContent;
+        const markerTimecode = row.cells[1]?.textContent;
+        const filePath = row.cells[3]?.textContent;
+        const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
+        const speed = row.cells[6]?.querySelector('button')?.dataset.state;
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
-            const rowData = [markerNumber, markerTimecode, filePath || ''];
+            const rowData = [markerNumber, markerTimecode, filePath || '', zoom || 'zoom_in', speed || 'slow'];
             csvData.push(rowData.join(','));
         }
     });
@@ -102,17 +142,21 @@ document.getElementById('save-json-button').addEventListener('click', () => {
     const jsonData = [];
 
     rows.forEach(row => {
-        const markerNumber = row.cells[0].textContent;
-        const markerTimecode = row.cells[1].textContent;
-        const caption = row.cells[2].textContent;
-        const filePath = row.cells[3].textContent;
+        const markerNumber = row.cells[0]?.textContent;
+        const markerTimecode = row.cells[1]?.textContent;
+        const caption = row.cells[2]?.textContent;
+        const filePath = row.cells[3]?.textContent;
+        const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
+        const speed = row.cells[6]?.querySelector('button')?.dataset.state;
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
             jsonData.push({
                 markerNumber,
                 markerTimecode,
                 caption,
-                filePath
+                filePath,
+                zoom: zoom || 'zoom_in',
+                speed: speed || 'slow'
             });
         }
     });

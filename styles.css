@@ -94,3 +94,20 @@ th, td {
 .drop-cell:hover .delete-btn {
     display: block; /* Show when hovering over the drop cell */
 }
+
+.toggle-btn {
+    padding: 5px 10px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.toggle-btn.red {
+    background-color: red;
+}
+
+.toggle-btn:hover {
+    background-color: #0056b3;
+}
