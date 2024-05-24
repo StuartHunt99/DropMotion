@@ -3,43 +3,47 @@ const path = require('path');
 const fs = require('fs');
 const csv = require('csv-parser');
 
-ipcMain.handle('read-csv', async (event) => {
+ipcMain.handle('read-csv', async () => {
     const results = [];
     const filePath = path.join(__dirname, 'output_spreadsheet.csv');
     return new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
             .pipe(csv())
             .on('data', (data) => results.push(data))
-            .on('end', () => {
-                resolve(results);
-            })
-            .on('error', (error) => {
-                reject(error);
-            });
+            .on('end', () => resolve(results))
+            .on('error', (error) => reject(error));
     });
 });
 
 ipcMain.on('save-csv', async (event, data) => {
-    const { filePath } = await dialog.showSaveDialog({
-        title: 'Save CSV',
-        defaultPath: path.join(__dirname, 'updated_spreadsheet.csv'),
-        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
-    });
+    try {
+        const { filePath } = await dialog.showSaveDialog({
+            title: 'Save CSV',
+            defaultPath: path.join(__dirname, 'updated_spreadsheet.csv'),
+            filters: [{ name: 'CSV Files', extensions: ['csv'] }]
+        });
 
-    if (filePath) {
-        fs.writeFileSync(filePath, data);
+        if (filePath) {
+            fs.writeFileSync(filePath, data);
+        }
+    } catch (error) {
+        console.error('Error saving CSV:', error);
     }
 });
 
 ipcMain.on('save-json', async (event, data) => {
-    const { filePath } = await dialog.showSaveDialog({
-        title: 'Save JSON',
-        defaultPath: path.join(__dirname, 'updated_spreadsheet.json'),
-        filters: [{ name: 'JSON Files', extensions: ['json'] }]
-    });
+    try {
+        const { filePath } = await dialog.showSaveDialog({
+            title: 'Save JSON',
+            defaultPath: path.join(__dirname, 'updated_spreadsheet.json'),
+            filters: [{ name: 'JSON Files', extensions: ['json'] }]
+        });
 
-    if (filePath) {
-        fs.writeFileSync(filePath, data);
+        if (filePath) {
+            fs.writeFileSync(filePath, data);
+        }
+    } catch (error) {
+        console.error('Error saving JSON:', error);
     }
 });
 
@@ -56,6 +60,10 @@ function createWindow() {
     });
 
     win.loadFile('index.html');
+
+    win.on('closed', () => {
+        win = null;
+    });
 }
 
 app.whenReady().then(() => {

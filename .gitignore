@@ -400,3 +400,11 @@ FodyWeavers.xsd
 updated_spreadsheet.csv
 *.csv
 *.json
+xml-updater/UPDATED_TEST_ZOOM_PAN.xml
+.gitignore
+TEST.xml
+TEST_ZOOM_200.xml
+TEST_ZOOM_200_MANUAL.xml
+sample_clip_complex.xml
+FCP Translation Results 2024-05-18-09-26.txt
+xml-updater/TEST_ZOOM_PAN.xml
