@@ -55,7 +55,7 @@ th, td {
     transform: translateX(100%); /* Move tooltip to the left of the element */
 }
 
-#save-button, #save-json-button {
+#save-json-button {
     padding: 10px 20px;
     font-size: 16px;
     background-color: #007bff;
@@ -66,7 +66,7 @@ th, td {
     margin: 5px;
 }
 
-#save-button:hover, #save-json-button:hover {
+#save-json-button:hover {
     background-color: #0056b3;
 }
 
@@ -77,26 +77,33 @@ th, td {
     display: block; /* Remove any inline spacing */
 }
 
-.delete-btn {
+.delete-btn, .reset-btn {
     position: absolute;
-    top: 0;
-    right: 0;
+    right: 0; /* Position buttons on the right edge */
     background-color: red;
     color: white;
     border: none;
     cursor: pointer;
-    padding: 2px 5px;
-    font-size: 12px;
     display: none; /* Initially hidden */
 }
 
-.drop-cell img {
-    display: block;
-    margin: 0; /* Remove margin */
-    padding: 0; /* Remove padding */
+.reset-btn {
+    top: 20px; /* Position reset button below the delete button */
+    background-color: blue;
+    font-size: 16px;
+    padding: 2px 7px;
+
+
 }
 
-.drop-cell:hover .delete-btn {
+.delete-btn {
+    top: 0; /* Position delete button at the top */
+    font-size: 12px;
+    padding: 2px 7px;
+}
+
+
+.drop-cell:hover .delete-btn, .drop-cell:hover .reset-btn {
     display: block; /* Show when hovering over the drop cell */
 }
 
@@ -123,4 +130,5 @@ th, td {
     height: 10px;
     border-radius: 50%;
     background-color: red;
+    cursor: pointer;
 }

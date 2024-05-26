@@ -107,7 +107,7 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
         if clipitem is not None:
             img_width, img_height = get_image_dimensions(clip['filePath'])
             initial_scale = calculate_initial_scale(img_width, img_height)
-            final_scale = initial_scale + scale_increment
+            final_scale = initial_scale * 1.5  # 150% of the initial scale
 
             filter_element = ET.SubElement(clipitem, 'filter')
             effect = ET.SubElement(filter_element, 'effect')

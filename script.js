@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         deleteBtn.classList.add('delete-btn');
                         previewTd.appendChild(deleteBtn);
 
+                        const resetBtn = document.createElement('button');
+                        resetBtn.textContent = '↺';
+                        resetBtn.classList.add('reset-btn');
+                        previewTd.appendChild(resetBtn);
+
                         filePathTd.textContent = file.path;
                         filePathTd.setAttribute('data-full-path', file.path);
 
@@ -108,27 +113,66 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clickCoordinatesTd.dataset.coordinates = '';
                         });
 
-                        img.addEventListener('click', (event) => {
-                            const rect = img.getBoundingClientRect();
-                            const x = (0.5 - (event.clientX - rect.left) / rect.width).toFixed(2);
-                            const y = (0.5 - (event.clientY - rect.top) / rect.height).toFixed(2);
+                        resetBtn.addEventListener('click', () => {
+                            updateDotPosition(0, 0);
+                        });
 
+                        // Function to update coordinates and dot position
+                        function updateDotPosition(x, y) {
                             const coordinates = { x, y };
                             clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
-
-                            // Log coordinates to the console for debugging
                             console.log('Click coordinates relative to the image:', coordinates);
 
-                            const dot = document.createElement('div');
-                            dot.classList.add('click-dot');
-                            dot.style.left = `calc(${(0.5 - parseFloat(x)) * 100}% - 5px)`;  // Center the dot horizontally
-                            dot.style.top = `calc(${(0.5 - parseFloat(y)) * 100}% - 5px)`;   // Center the dot vertically
+                            const dot = previewTd.querySelector('.click-dot');
+                            dot.style.left = `calc(${(parseFloat(x) + 0.5) * 100}% - 5px)`;
+                            dot.style.top = `calc(${(parseFloat(y) + 0.5) * 100}% - 5px)`;
+                        }
 
-                            previewTd.style.position = 'relative';
-                            previewTd.innerHTML = '';
-                            previewTd.appendChild(img);
-                            previewTd.appendChild(dot);
-                            previewTd.appendChild(deleteBtn);
+                        // Create and position the initial dot at the center
+                        const dot = document.createElement('div');
+                        dot.classList.add('click-dot');
+                        dot.style.left = 'calc(50% - 5px)';
+                        dot.style.top = 'calc(50% - 5px)';
+                        previewTd.appendChild(dot);
+
+                        // Make the dot draggable
+                        dot.addEventListener('mousedown', (event) => {
+                            event.preventDefault();
+                            const shiftX = event.clientX - dot.getBoundingClientRect().left;
+                            const shiftY = event.clientY - dot.getBoundingClientRect().top;
+
+                            function moveAt(pageX, pageY) {
+                                const rect = img.getBoundingClientRect();
+                                let x = ((pageX - rect.left - shiftX + 5) / rect.width - 0.5).toFixed(2);
+                                let y = ((pageY - rect.top - shiftY + 5) / rect.height - 0.5).toFixed(2);
+                                if (x > 0.5) x = 0.5;
+                                if (x < -0.5) x = -0.5;
+                                if (y > 0.5) y = 0.5;
+                                if (y < -0.5) y = -0.5;
+                                updateDotPosition(x, y);
+                            }
+
+                            function onMouseMove(event) {
+                                moveAt(event.pageX, event.pageY);
+                            }
+
+                            document.addEventListener('mousemove', onMouseMove);
+
+                            dot.onmouseup = () => {
+                                document.removeEventListener('mousemove', onMouseMove);
+                                dot.onmouseup = null;
+                            };
+                        });
+
+                        dot.ondragstart = () => {
+                            return false;
+                        };
+
+                        img.addEventListener('click', (event) => {
+                            const rect = img.getBoundingClientRect();
+                            const x = ((event.clientX - rect.left) / rect.width - 0.5).toFixed(2);
+                            const y = ((event.clientY - rect.top) / rect.height - 0.5).toFixed(2);
+                            updateDotPosition(x, y);
                         });
                     };
                     reader.readAsDataURL(file);
@@ -140,30 +184,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Error reading CSV:', error);
     }
-});
-
-document.getElementById('save-button').addEventListener('click', () => {
-    const rows = document.querySelectorAll('#csv-table tr');
-    const csvData = [];
-
-    csvData.push('Marker Number,Marker Timecode,File Path,Zoom,Speed,Click Coordinates');
-
-    rows.forEach(row => {
-        const markerNumber = row.cells[0]?.textContent;
-        const markerTimecode = row.cells[1]?.textContent;
-        const filePath = row.cells[3]?.textContent;
-        const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
-        const speed = row.cells[6]?.querySelector('button')?.dataset.state;
-        const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
-
-        if (markerNumber !== 'Marker Number' && markerTimecode) {
-            const rowData = [markerNumber, markerTimecode, filePath || '', zoom || 'zoom_in', speed || 'slow', clickCoordinates];
-            csvData.push(rowData.join(','));
-        }
-    });
-
-    const csvContent = csvData.join('\n');
-    window.electron.saveCSV(csvContent);
 });
 
 document.getElementById('save-json-button').addEventListener('click', () => {
@@ -180,6 +200,12 @@ document.getElementById('save-json-button').addEventListener('click', () => {
         const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
+            const coordinates = clickCoordinates ? JSON.parse(clickCoordinates) : { x: 0, y: 0 };
+            // Invert the coordinates for export
+            const invertedCoordinates = {
+                x: (-coordinates.x).toFixed(2),
+                y: (-coordinates.y).toFixed(2)
+            };
             jsonData.push({
                 markerNumber,
                 markerTimecode,
@@ -187,7 +213,7 @@ document.getElementById('save-json-button').addEventListener('click', () => {
                 filePath,
                 zoom: zoom || 'zoom_in',
                 speed: speed || 'slow',
-                clickCoordinates: clickCoordinates ? JSON.parse(clickCoordinates) : {}
+                clickCoordinates: invertedCoordinates
             });
         }
     });
