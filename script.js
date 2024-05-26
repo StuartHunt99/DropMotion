@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         img.addEventListener('click', (event) => {
                             const rect = img.getBoundingClientRect();
-                            const x = ((event.clientX - rect.left) / rect.width).toFixed(2);
-                            const y = ((event.clientY - rect.top) / rect.height).toFixed(2);
+                            const x = (0.5 - (event.clientX - rect.left) / rect.width).toFixed(2);
+                            const y = (0.5 - (event.clientY - rect.top) / rect.height).toFixed(2);
 
                             const coordinates = { x, y };
                             clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
@@ -121,8 +121,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             const dot = document.createElement('div');
                             dot.classList.add('click-dot');
-                            dot.style.left = `calc(${x * 100}% - 5px)`;  // Center the dot horizontally
-                            dot.style.top = `calc(${y * 100}% - 5px)`;   // Center the dot vertically
+                            dot.style.left = `calc(${(0.5 - parseFloat(x)) * 100}% - 5px)`;  // Center the dot horizontally
+                            dot.style.top = `calc(${(0.5 - parseFloat(y)) * 100}% - 5px)`;   // Center the dot vertically
 
                             previewTd.style.position = 'relative';
                             previewTd.innerHTML = '';

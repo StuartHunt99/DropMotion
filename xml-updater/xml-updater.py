@@ -100,7 +100,7 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
         # Append the new clipitem to the new video track
         new_track.append(new_clipitem)
 
-    # Apply scale effects after adding all clips
+    # Apply scale and center effects after adding all clips
     for clip in clips_data:
         new_clip_path = clip['filePath'].split('/')[-1]
         clipitem = root.find(f".//clipitem[name='{new_clip_path}']")
@@ -118,6 +118,7 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
             ET.SubElement(effect, 'mediatype').text = "video"
             ET.SubElement(effect, 'pproBypass').text = "false"
 
+            # Apply Scale Parameter
             scale_param = ET.SubElement(effect, 'parameter', authoringApp="PremierePro")
             ET.SubElement(scale_param, 'parameterid').text = "scale"
             ET.SubElement(scale_param, 'name').text = "Scale"
@@ -129,7 +130,7 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
             keyframe2 = ET.SubElement(scale_param, 'keyframe')
             duration = int(clipitem.find('out').text) - int(clipitem.find('in').text)
             
-            if clip.get('zoom') == "zoom_out":
+            if clip.get('zoom').lower() == "zoom_out":
                 ET.SubElement(keyframe1, 'when').text = "0"
                 ET.SubElement(keyframe1, 'value').text = str(final_scale)
                 ET.SubElement(keyframe2, 'when').text = str(duration)
@@ -139,6 +140,39 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
                 ET.SubElement(keyframe1, 'value').text = str(initial_scale)
                 ET.SubElement(keyframe2, 'when').text = str(duration)
                 ET.SubElement(keyframe2, 'value').text = str(final_scale)
+
+            # Apply Center Parameter
+            center_param = ET.SubElement(effect, 'parameter', authoringApp="PremierePro")
+            ET.SubElement(center_param, 'parameterid').text = "center"
+            ET.SubElement(center_param, 'name').text = "Center"
+
+            # Determine keyframe times and values
+            if clip.get('zoom').lower() == "zoom_out":
+                center_keyframe1_time = "0"
+                center_keyframe2_time = str(duration)
+                center_keyframe1_value = (clip['clickCoordinates']['x'], clip['clickCoordinates']['y'])
+                center_keyframe2_value = ("0", "0")
+            else:
+                center_keyframe1_time = "0"
+                center_keyframe2_time = str(duration)
+                center_keyframe1_value = ("0", "0")
+                center_keyframe2_value = (clip['clickCoordinates']['x'], clip['clickCoordinates']['y'])
+
+            # Apply center keyframes
+            center_keyframe1 = ET.SubElement(center_param, 'keyframe')
+            ET.SubElement(center_keyframe1, 'when').text = center_keyframe1_time
+            center_value1 = ET.SubElement(center_keyframe1, 'value')
+            ET.SubElement(center_value1, 'horiz').text = center_keyframe1_value[0]
+            ET.SubElement(center_value1, 'vert').text = center_keyframe1_value[1]
+
+            center_keyframe2 = ET.SubElement(center_param, 'keyframe')
+            ET.SubElement(center_keyframe2, 'when').text = center_keyframe2_time
+            center_value2 = ET.SubElement(center_keyframe2, 'value')
+            ET.SubElement(center_value2, 'horiz').text = center_keyframe2_value[0]
+            ET.SubElement(center_value2, 'vert').text = center_keyframe2_value[1]
+
+            # Print the center parameters
+            print(f"Clip: {clip['filePath']}, Center X: {clip['clickCoordinates']['x']}, Center Y: {clip['clickCoordinates']['y']}")
 
     # Write the updated XML to a new file with scale effects
     tree.write(output_file, encoding='UTF-8', xml_declaration=True)
