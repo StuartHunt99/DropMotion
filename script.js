@@ -65,6 +65,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             speedTd.appendChild(speedToggleBtn);
             tr.appendChild(speedTd);
 
+            const clickCoordinatesTd = document.createElement('td');
+            clickCoordinatesTd.dataset.coordinates = '';
+            tr.appendChild(clickCoordinatesTd);
+
             tableBody.appendChild(tr);
 
             previewTd.addEventListener('dragover', (event) => {
@@ -101,6 +105,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                             previewTd.innerHTML = 'Drop image here';
                             filePathTd.textContent = '';
                             filePathTd.removeAttribute('data-full-path');
+                            clickCoordinatesTd.dataset.coordinates = '';
+                        });
+
+                        img.addEventListener('click', (event) => {
+                            const rect = img.getBoundingClientRect();
+                            const x = ((event.clientX - rect.left) / rect.width).toFixed(2);
+                            const y = ((event.clientY - rect.top) / rect.height).toFixed(2);
+
+                            const coordinates = { x, y };
+                            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+
+                            // Log coordinates to the console for debugging
+                            console.log('Click coordinates relative to the image:', coordinates);
+
+                            const dot = document.createElement('div');
+                            dot.classList.add('click-dot');
+                            dot.style.left = `calc(${x * 100}% - 5px)`;  // Center the dot horizontally
+                            dot.style.top = `calc(${y * 100}% - 5px)`;   // Center the dot vertically
+
+                            previewTd.style.position = 'relative';
+                            previewTd.innerHTML = '';
+                            previewTd.appendChild(img);
+                            previewTd.appendChild(dot);
+                            previewTd.appendChild(deleteBtn);
                         });
                     };
                     reader.readAsDataURL(file);
@@ -118,7 +146,7 @@ document.getElementById('save-button').addEventListener('click', () => {
     const rows = document.querySelectorAll('#csv-table tr');
     const csvData = [];
 
-    csvData.push('Marker Number,Marker Timecode,File Path,Zoom,Speed');
+    csvData.push('Marker Number,Marker Timecode,File Path,Zoom,Speed,Click Coordinates');
 
     rows.forEach(row => {
         const markerNumber = row.cells[0]?.textContent;
@@ -126,9 +154,10 @@ document.getElementById('save-button').addEventListener('click', () => {
         const filePath = row.cells[3]?.textContent;
         const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
         const speed = row.cells[6]?.querySelector('button')?.dataset.state;
+        const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
-            const rowData = [markerNumber, markerTimecode, filePath || '', zoom || 'zoom_in', speed || 'slow'];
+            const rowData = [markerNumber, markerTimecode, filePath || '', zoom || 'zoom_in', speed || 'slow', clickCoordinates];
             csvData.push(rowData.join(','));
         }
     });
@@ -148,6 +177,7 @@ document.getElementById('save-json-button').addEventListener('click', () => {
         const filePath = row.cells[3]?.textContent;
         const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
         const speed = row.cells[6]?.querySelector('button')?.dataset.state;
+        const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
             jsonData.push({
@@ -156,7 +186,8 @@ document.getElementById('save-json-button').addEventListener('click', () => {
                 caption,
                 filePath,
                 zoom: zoom || 'zoom_in',
-                speed: speed || 'slow'
+                speed: speed || 'slow',
+                clickCoordinates: clickCoordinates ? JSON.parse(clickCoordinates) : {}
             });
         }
     });

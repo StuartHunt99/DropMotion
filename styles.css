@@ -25,6 +25,8 @@ th, td {
     border: 2px dashed #007bff;
     color: #007bff;
     transition: background-color 0.3s;
+    position: relative; /* Ensure absolute positioning works within */
+    padding: 0; /* Remove padding from drop cells */
 }
 
 .drop-cell.dragover {
@@ -69,8 +71,10 @@ th, td {
 }
 
 .thumbnail {
-    max-width: 100px;
-    max-height: 100px;
+    width: 100%; /* Make image fill its container */
+    height: 100%; /* Make image fill its container */
+    object-fit: cover; /* Ensure image covers the container without distortion */
+    display: block; /* Remove any inline spacing */
 }
 
 .delete-btn {
@@ -88,7 +92,8 @@ th, td {
 
 .drop-cell img {
     display: block;
-    margin: 0 auto 5px;
+    margin: 0; /* Remove margin */
+    padding: 0; /* Remove padding */
 }
 
 .drop-cell:hover .delete-btn {
@@ -110,4 +115,12 @@ th, td {
 
 .toggle-btn:hover {
     background-color: #0056b3;
+}
+
+.click-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: red;
 }
