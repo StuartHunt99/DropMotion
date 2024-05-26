@@ -100,18 +100,12 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
         # Append the new clipitem to the new video track
         new_track.append(new_clipitem)
 
-    # Write the updated XML to a new file
-    tree.write(output_file, encoding='UTF-8', xml_declaration=True)
-
     # Apply scale effects after adding all clips
-    tree = ET.parse(output_file)
-    root = tree.getroot()
-
     for clip in clips_data:
         new_clip_path = clip['filePath'].split('/')[-1]
         clipitem = root.find(f".//clipitem[name='{new_clip_path}']")
         if clipitem is not None:
-            img_width, img_height = get_image_dimensions(img_path)
+            img_width, img_height = get_image_dimensions(clip['filePath'])
             initial_scale = calculate_initial_scale(img_width, img_height)
             final_scale = initial_scale + scale_increment
 
@@ -132,13 +126,19 @@ def add_clips_to_sequence(xml_file, json_file, output_file, scale_increment=150,
             ET.SubElement(scale_param, 'value').text = str(initial_scale)
             
             keyframe1 = ET.SubElement(scale_param, 'keyframe')
-            ET.SubElement(keyframe1, 'when').text = "0"
-            ET.SubElement(keyframe1, 'value').text = str(initial_scale)
-            
             keyframe2 = ET.SubElement(scale_param, 'keyframe')
             duration = int(clipitem.find('out').text) - int(clipitem.find('in').text)
-            ET.SubElement(keyframe2, 'when').text = str(duration)
-            ET.SubElement(keyframe2, 'value').text = str(final_scale)
+            
+            if clip.get('zoom') == "zoom_out":
+                ET.SubElement(keyframe1, 'when').text = "0"
+                ET.SubElement(keyframe1, 'value').text = str(final_scale)
+                ET.SubElement(keyframe2, 'when').text = str(duration)
+                ET.SubElement(keyframe2, 'value').text = str(initial_scale)
+            else:  # Default to Zoom_In
+                ET.SubElement(keyframe1, 'when').text = "0"
+                ET.SubElement(keyframe1, 'value').text = str(initial_scale)
+                ET.SubElement(keyframe2, 'when').text = str(duration)
+                ET.SubElement(keyframe2, 'value').text = str(final_scale)
 
     # Write the updated XML to a new file with scale effects
     tree.write(output_file, encoding='UTF-8', xml_declaration=True)
