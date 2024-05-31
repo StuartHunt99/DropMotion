@@ -167,10 +167,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             document.addEventListener('mousemove', onMouseMove);
 
-                            dot.onmouseup = () => {
+                            function onMouseUp() {
                                 document.removeEventListener('mousemove', onMouseMove);
-                                dot.onmouseup = null;
-                            };
+                                document.removeEventListener('mouseup', onMouseUp);
+                            }
+
+                            document.addEventListener('mouseup', onMouseUp);
                         });
 
                         dot.ondragstart = () => {
