@@ -67,6 +67,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const clickCoordinatesTd = document.createElement('td');
             clickCoordinatesTd.dataset.coordinates = '';
+            clickCoordinatesTd.dataset.imgWidth = '';
+            clickCoordinatesTd.dataset.imgHeight = '';
             tr.appendChild(clickCoordinatesTd);
 
             tableBody.appendChild(tr);
@@ -111,11 +113,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                             filePathTd.textContent = '';
                             filePathTd.removeAttribute('data-full-path');
                             clickCoordinatesTd.dataset.coordinates = '';
+                            clickCoordinatesTd.dataset.imgWidth = '';
+                            clickCoordinatesTd.dataset.imgHeight = '';
                         });
 
                         resetBtn.addEventListener('click', () => {
                             updateDotPosition(0, 0);
                         });
+
+                        img.onload = function () {
+                            clickCoordinatesTd.dataset.imgWidth = img.width;
+                            clickCoordinatesTd.dataset.imgHeight = img.height;
+                        };
 
                         // Function to update coordinates and dot position
                         function updateDotPosition(x, y) {
@@ -198,13 +207,20 @@ document.getElementById('save-json-button').addEventListener('click', () => {
         const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
         const speed = row.cells[6]?.querySelector('button')?.dataset.state;
         const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
+        const imgWidth = row.cells[7]?.dataset.imgWidth || 1920;
+        const imgHeight = row.cells[7]?.dataset.imgHeight || 1080;
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
             const coordinates = clickCoordinates ? JSON.parse(clickCoordinates) : { x: 0, y: 0 };
+            // Map the coordinates to the 1920x1080 viewport
+            const viewportCoordinates = {
+                x: (coordinates.x * 1920 / imgWidth).toFixed(2),
+                y: (coordinates.y * 1080 / imgHeight).toFixed(2)
+            };
             // Invert the coordinates for export
             const invertedCoordinates = {
-                x: (-coordinates.x).toFixed(2),
-                y: (-coordinates.y).toFixed(2)
+                x: (-viewportCoordinates.x).toFixed(2),
+                y: (-viewportCoordinates.y).toFixed(2)
             };
             jsonData.push({
                 markerNumber,

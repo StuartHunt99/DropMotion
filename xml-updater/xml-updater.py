@@ -90,8 +90,14 @@ class VideoEditor:
         return new_clipitem
 
     def _apply_scale_and_center_effects(self, clipitem, img_width, img_height, clip):
+
+        if clip['speed'] == 'slow':
+            speed = 1.5
+        else:
+            speed = 2
+
         initial_scale = self._calculate_initial_scale(img_width, img_height)
-        final_scale = initial_scale * 1.5  # 150% of the initial scale
+        final_scale = initial_scale * speed  # 150% of the initial scale
 
         filter_element = ET.SubElement(clipitem, 'filter')
         effect = ET.SubElement(filter_element, 'effect')
