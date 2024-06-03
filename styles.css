@@ -18,15 +18,15 @@ th, td {
     border: 1px solid #007bff;
     padding: 8px;
     text-align: center;
-    position: relative; /* Added to contain the X button */
+    position: relative;
 }
 
 .drop-cell {
     border: 2px dashed #007bff;
     color: #007bff;
     transition: background-color 0.3s;
-    position: relative; /* Ensure absolute positioning works within */
-    padding: 0; /* Remove padding from drop cells */
+    position: relative;
+    padding: 0;
 }
 
 .drop-cell.dragover {
@@ -40,7 +40,7 @@ th, td {
     text-overflow: ellipsis;
     direction: rtl;
     text-align: left;
-    position: relative; /* Enable absolute positioning of tooltip */
+    position: relative;
 }
 
 .file-path:hover::after {
@@ -51,8 +51,8 @@ th, td {
     padding: 5px;
     z-index: 1000;
     white-space: nowrap;
-    right: 0; /* Position tooltip within view */
-    transform: translateX(100%); /* Move tooltip to the left of the element */
+    right: 0;
+    transform: translateX(100%);
 }
 
 #save-json-button {
@@ -71,40 +71,37 @@ th, td {
 }
 
 .thumbnail {
-    width: 100%; /* Make image fill its container */
-    height: 100%; /* Make image fill its container */
-    object-fit: cover; /* Ensure image covers the container without distortion */
-    display: block; /* Remove any inline spacing */
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .delete-btn, .reset-btn {
     position: absolute;
-    right: 0; /* Position buttons on the right edge */
+    right: 0;
     background-color: red;
     color: white;
     border: none;
     cursor: pointer;
-    display: none; /* Initially hidden */
+    display: none;
 }
 
 .reset-btn {
-    top: 20px; /* Position reset button below the delete button */
+    top: 20px;
     background-color: blue;
     font-size: 16px;
     padding: 2px 7px;
-
-
 }
 
 .delete-btn {
-    top: 0; /* Position delete button at the top */
+    top: 0;
     font-size: 12px;
     padding: 2px 7px;
 }
 
-
 .drop-cell:hover .delete-btn, .drop-cell:hover .reset-btn {
-    display: block; /* Show when hovering over the drop cell */
+    display: block;
 }
 
 .toggle-btn {
@@ -131,4 +128,11 @@ th, td {
     border-radius: 50%;
     background-color: red;
     cursor: pointer;
+}
+
+.overlay-rect {
+    position: absolute;
+    border: 2px solid;
+    pointer-events: none;
+    z-index: 10;
 }

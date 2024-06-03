@@ -3,6 +3,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         const results = await window.electron.readCSV();
         const tableBody = document.getElementById('csv-body');
 
+        function updateRectangleOverlay(previewTd) {
+            const img = previewTd.querySelector('img');
+            if (!img) return;
+
+            const frame = img.getBoundingClientRect();
+            const frameWidth = frame.width;
+            const frameHeight = frame.height;
+            const aspectRatio = 16 / 9;
+
+            if (frameHeight < frameWidth) {
+                baseWidth = frameWidth;
+                baseHeight = baseWidth / aspectRatio;
+            } else {
+                baseHeight = frameHeight;
+                baseWidth = baseHeight / aspectRatio;
+            }
+
+            let scaledWidth, scaledHeight;
+            const zoomToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(6) .toggle-btn');
+            const speedToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(7) .toggle-btn');
+
+            if (speedToggleBtn.dataset.state === 'fast') {
+                scaledWidth = baseWidth * (1/2);
+                scaledHeight = scaledWidth / aspectRatio;
+            } else {
+                scaledWidth = baseWidth * (2/3);
+                scaledHeight = scaledWidth / aspectRatio;
+            }
+
+            const dot = previewTd.querySelector('.click-dot');
+            const dotX = dot.offsetLeft + 5; // +5 to account for the half-width of the dot
+            const dotY = dot.offsetTop + 5;  // +5 to account for the half-height of the dot
+
+            let overlayRect = previewTd.querySelector('.overlay-rect');
+            if (!overlayRect) {
+                overlayRect = document.createElement('div');
+                overlayRect.classList.add('overlay-rect');
+                previewTd.appendChild(overlayRect);
+            }
+
+            overlayRect.style.width = `${scaledWidth}px`;
+            overlayRect.style.height = `${scaledHeight}px`;
+            overlayRect.style.left = `${dotX - scaledWidth / 2}px`;
+            overlayRect.style.top = `${dotY - scaledHeight / 2}px`;
+            overlayRect.style.borderColor = speedToggleBtn.dataset.state === 'fast' ? 'red' : 'green';
+        }
+
+        function removeRectangleOverlay(previewTd) {
+            const overlayRect = previewTd.querySelector('.overlay-rect');
+            if (overlayRect) {
+                overlayRect.remove();
+            }
+        }
+
         results.forEach(row => {
             const tr = document.createElement('tr');
 
@@ -42,6 +96,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     zoomToggleBtn.dataset.state = 'zoom_in';
                     zoomToggleBtn.classList.remove('red');
                 }
+                updateRectangleOverlay(previewTd);
             });
             zoomTd.appendChild(zoomToggleBtn);
             tr.appendChild(zoomTd);
@@ -61,6 +116,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     speedToggleBtn.dataset.state = 'slow';
                     speedToggleBtn.classList.remove('red');
                 }
+                updateRectangleOverlay(previewTd);
             });
             speedTd.appendChild(speedToggleBtn);
             tr.appendChild(speedTd);
@@ -115,15 +171,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clickCoordinatesTd.dataset.coordinates = '';
                             clickCoordinatesTd.dataset.imgWidth = '';
                             clickCoordinatesTd.dataset.imgHeight = '';
+                            removeRectangleOverlay(previewTd);
                         });
 
                         resetBtn.addEventListener('click', () => {
                             updateDotPosition(0, 0);
+                            updateRectangleOverlay(previewTd);
                         });
 
                         img.onload = function () {
                             clickCoordinatesTd.dataset.imgWidth = img.width;
                             clickCoordinatesTd.dataset.imgHeight = img.height;
+                            updateRectangleOverlay(previewTd);
                         };
 
                         // Function to update coordinates and dot position
@@ -135,6 +194,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const dot = previewTd.querySelector('.click-dot');
                             dot.style.left = `calc(${(parseFloat(x) + 1) * 50}% - 5px)`;
                             dot.style.top = `calc(${(parseFloat(y) + 1) * 50}% - 5px)`;
+                            updateRectangleOverlay(previewTd);
                         }
 
                         // Create and position the initial dot at the center
@@ -185,15 +245,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const y = ((event.clientY - rect.top) / rect.height * 2 - 1).toFixed(2);
                             updateDotPosition(x, y);
                         });
+
+                        // Initial call to set the rectangle overlay based on the default states
+                        updateRectangleOverlay(previewTd);
                     };
                     reader.readAsDataURL(file);
                 } else {
-                    alert('Please drop an image file.');
+                    alert('Please drop a valid image file.');
                 }
             });
         });
     } catch (error) {
-        console.error('Error reading CSV:', error);
+        console.error('Error:', error);
     }
 });
 
