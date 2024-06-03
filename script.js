@@ -10,35 +10,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             const rect = img.getBoundingClientRect();
             const width = rect.width;
             const height = rect.height;
-            const isPortrait = height > width;
+            const aspectRatio = 16 / 9;
 
             let baseWidth, baseHeight, scaledWidth, scaledHeight;
-            const aspectRatio = 16 / 9;
 
             const zoomToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(6) .toggle-btn');
             const speedToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(7) .toggle-btn');
 
             if (width / height > aspectRatio) {
-                // Image is wider than 16:9
                 baseHeight = height;
                 baseWidth = height * aspectRatio;
             } else {
-                // Image is narrower than 16:9
                 baseWidth = width;
                 baseHeight = width / aspectRatio;
             }
-            
+
             if (speedToggleBtn.dataset.state === 'fast') {
                 scaledWidth = baseWidth * (1 / 2);
                 scaledHeight = scaledWidth / aspectRatio;
             } else {
-                scaledWidth = baseWidth * (2 / 3); 
+                scaledWidth = baseWidth * (2 / 3);
                 scaledHeight = scaledWidth / aspectRatio;
             }
 
             const dot = previewTd.querySelector('.click-dot');
-            const dotX = dot.offsetLeft + 5; // +5 to account for the half-width of the dot
-            const dotY = dot.offsetTop + 5;  // +5 to account for the half-height of the dot
+            const dotX = dot.offsetLeft + 5;
+            const dotY = dot.offsetTop + 5;
 
             let overlayRect = previewTd.querySelector('.overlay-rect');
             if (!overlayRect) {
@@ -247,14 +244,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 moveAt(event.pageX, event.pageY);
                             }
 
-                            document.addEventListener('mousemove', onMouseMove);
-
-                            dot.addEventListener('mouseup', () => {
+                            const onMouseUpOrLeave = () => {
                                 document.removeEventListener('mousemove', onMouseMove);
-                            }, { once: true });
+                                document.removeEventListener('mouseup', onMouseUpOrLeave);
+                                document.removeEventListener('mouseleave', onMouseUpOrLeave);
+                            };
+
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUpOrLeave);
+                            document.addEventListener('mouseleave', onMouseUpOrLeave);
                         });
 
-                        dot.ondragstart = () => false;
+                        previewTd.addEventListener('click', (event) => {
+                            const rect = previewTd.getBoundingClientRect();
+                            const offsetX = event.clientX - rect.left;
+                            const offsetY = event.clientY - rect.top;
+                            const x = (offsetX / rect.width) * 2 - 1;
+                            const y = (offsetY / rect.height) * 2 - 1;
+                            updateDotPosition(x, y);
+                        });
                     };
                     reader.readAsDataURL(file);
                 } else {
