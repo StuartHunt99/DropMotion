@@ -156,3 +156,16 @@ th, td {
 .hidden-cell {
     display: none;
 }
+
+.fixed-width {
+    width: 60px; /* Adjust this value as needed */
+    min-width: 60px; /* Ensure the column doesn't shrink below this width */
+    max-width: 60px; /* Ensure the column doesn't grow beyond this width */
+    word-wrap: break-word; /* Ensure text wraps within the fixed width */
+}
+
+.preview-column {
+    width: 400px; /* Adjust this value as needed */
+    min-width: 400px; /* Ensure the column doesn't shrink below this width */
+    max-width: 400px; /* Ensure the column doesn't grow beyond this width */
+}

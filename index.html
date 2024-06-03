@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSV Drag and Drop</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="night-mode.css">
 </head>
 <body>
+<button id="night-mode-toggle" class="night-mode-btn">Night Mode</button>
 
 <table id="csv-table">
     <thead>
@@ -15,9 +17,9 @@
             <th>Marker Timecode</th>
             <th>Caption</th>
             <th>File Path</th>
-            <th>Preview</th>
-            <th>Zoom</th>
-            <th>Speed</th>
+            <th class="preview-column">Preview</th>
+            <th class="fixed-width">Zoom</th>
+            <th class="fixed-width">Speed</th>
         </tr>
     </thead>
     <tbody id="csv-body"></tbody>

@@ -1,0 +1,93 @@
+/* night-mode.css */
+
+/* Night mode styles */
+body.night-mode {
+    background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+    color: #e0e0e0;
+    transition: background 0.5s, color 0.5s;
+}
+
+table.night-mode {
+    border-color: #444444;
+    transition: border-color 0.5s;
+}
+
+table.night-mode th, table.night-mode td {
+    border-color: #444444;
+    transition: border-color 0.5s;
+}
+
+.night-mode .toggle-btn {
+    background: linear-gradient(45deg, #ff6f91, #ff9671);
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.5s, color 0.5s, box-shadow 0.5s;
+}
+
+.night-mode .toggle-btn[data-state="zoom_out"], .night-mode .toggle-btn[data-state="fast"] {
+    background: linear-gradient(45deg, #ff9a76, #ff6f61);
+    color: #ffffff;
+}
+
+.night-mode .delete-btn, .night-mode .reset-btn {
+    background: linear-gradient(45deg, #6a0572, #a90329);
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.5s, color 0.5s, box-shadow 0.5s;
+}
+
+.night-mode .overlay-rect {
+    border-color: #ff4081;
+    transition: border-color 0.5s;
+}
+
+.night-mode .base-rect {
+    border-color: #e0e0e0;
+    transition: border-color 0.5s;
+}
+
+.night-mode .click-dot {
+    background-color: #ff4081;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.5s, box-shadow 0.5s;
+}
+
+.night-mode .drop-cell {
+    color: #ffaf45;
+}
+
+/* Button styles */
+.night-mode-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(45deg, #ff6f91, #ff9671);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 50px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.5s, box-shadow 0.5s;
+}
+
+.night-mode-btn:hover {
+    background: linear-gradient(45deg, #ff9671, #ff6f91);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+.save-json-btn {
+    background: linear-gradient(45deg, #6200ea, #3700b3);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 50px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.5s, box-shadow 0.5s;
+}
+
+.save-json-btn:hover {
+    background: linear-gradient(45deg, #3700b3, #6200ea);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}

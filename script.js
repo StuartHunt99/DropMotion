@@ -2,6 +2,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const results = await window.electron.readCSV();
         const tableBody = document.getElementById('csv-body');
+        const nightModeToggle = document.getElementById('night-mode-toggle');
+        nightModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('night-mode');
+        });
 
         function updateRectangleOverlay(previewTd) {
             const img = previewTd.querySelector('img');
