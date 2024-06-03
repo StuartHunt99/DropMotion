@@ -152,3 +152,7 @@ th, td {
 .base-rect {
     border-color: yellow !important;
 }
+
+.hidden-cell {
+    display: none;
+}

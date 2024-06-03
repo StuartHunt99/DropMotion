@@ -143,6 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             clickCoordinatesTd.dataset.coordinates = '';
             clickCoordinatesTd.dataset.imgWidth = '';
             clickCoordinatesTd.dataset.imgHeight = '';
+            clickCoordinatesTd.classList.add('hidden-cell');
             tr.appendChild(clickCoordinatesTd);
 
             tableBody.appendChild(tr);
