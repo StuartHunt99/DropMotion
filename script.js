@@ -7,28 +7,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             const img = previewTd.querySelector('img');
             if (!img) return;
 
-            const frame = img.getBoundingClientRect();
-            const frameWidth = frame.width;
-            const frameHeight = frame.height;
+            const rect = img.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const isPortrait = height > width;
+
+            let baseWidth, baseHeight, scaledWidth, scaledHeight;
             const aspectRatio = 16 / 9;
 
-            if (frameHeight < frameWidth) {
-                baseWidth = frameWidth;
-                baseHeight = baseWidth / aspectRatio;
-            } else {
-                baseHeight = frameHeight;
-                baseWidth = baseHeight / aspectRatio;
-            }
-
-            let scaledWidth, scaledHeight;
             const zoomToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(6) .toggle-btn');
             const speedToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(7) .toggle-btn');
 
+            if (width / height > aspectRatio) {
+                // Image is wider than 16:9
+                baseHeight = height;
+                baseWidth = height * aspectRatio;
+            } else {
+                // Image is narrower than 16:9
+                baseWidth = width;
+                baseHeight = width / aspectRatio;
+            }
+            
             if (speedToggleBtn.dataset.state === 'fast') {
-                scaledWidth = baseWidth * (1/2);
+                scaledWidth = baseWidth * (1 / 2);
                 scaledHeight = scaledWidth / aspectRatio;
             } else {
-                scaledWidth = baseWidth * (2/3);
+                scaledWidth = baseWidth * (2 / 3); 
                 scaledHeight = scaledWidth / aspectRatio;
             }
 
@@ -43,17 +47,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 previewTd.appendChild(overlayRect);
             }
 
+            let baseRect = previewTd.querySelector('.base-rect');
+            if (!baseRect) {
+                baseRect = document.createElement('div');
+                baseRect.classList.add('base-rect');
+                previewTd.appendChild(baseRect);
+            }
+
             overlayRect.style.width = `${scaledWidth}px`;
             overlayRect.style.height = `${scaledHeight}px`;
             overlayRect.style.left = `${dotX - scaledWidth / 2}px`;
             overlayRect.style.top = `${dotY - scaledHeight / 2}px`;
             overlayRect.style.borderColor = speedToggleBtn.dataset.state === 'fast' ? 'red' : 'green';
+
+            baseRect.style.width = `${baseWidth}px`;
+            baseRect.style.height = `${baseHeight}px`;
+            baseRect.style.left = `calc(50% - ${baseWidth / 2}px)`;
+            baseRect.style.top = `calc(50% - ${baseHeight / 2}px)`;
+            baseRect.style.borderColor = 'white';
         }
 
         function removeRectangleOverlay(previewTd) {
             const overlayRect = previewTd.querySelector('.overlay-rect');
             if (overlayRect) {
                 overlayRect.remove();
+            }
+            const baseRect = previewTd.querySelector('.base-rect');
+            if (baseRect) {
+                baseRect.remove();
             }
         }
 
@@ -212,13 +233,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             function moveAt(pageX, pageY) {
                                 const rect = img.getBoundingClientRect();
-                                let x = ((pageX - rect.left - shiftX + 5) / rect.width * 2 - 1).toFixed(2);
-                                let y = ((pageY - rect.top - shiftY + 5) / rect.height * 2 - 1).toFixed(2);
-                                if (x > 1) x = 1;
-                                if (x < -1) x = -1;
-                                if (y > 1) y = 1;
-                                if (y < -1) y = -1;
+                                let x = ((pageX - rect.left - shiftX + 5) / rect.width) * 2 - 1;
+                                let y = ((pageY - rect.top - shiftY + 5) / rect.height) * 2 - 1;
+                                x = Math.max(-1, Math.min(1, x));
+                                y = Math.max(-1, Math.min(1, y));
+                                dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
+                                dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
                                 updateDotPosition(x, y);
+                                updateRectangleOverlay(previewTd);
                             }
 
                             function onMouseMove(event) {
@@ -227,27 +249,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             document.addEventListener('mousemove', onMouseMove);
 
-                            function onMouseUp() {
+                            dot.addEventListener('mouseup', () => {
                                 document.removeEventListener('mousemove', onMouseMove);
-                                document.removeEventListener('mouseup', onMouseUp);
-                            }
-
-                            document.addEventListener('mouseup', onMouseUp);
+                            }, { once: true });
                         });
 
-                        dot.ondragstart = () => {
-                            return false;
-                        };
-
-                        img.addEventListener('click', (event) => {
-                            const rect = img.getBoundingClientRect();
-                            const x = ((event.clientX - rect.left) / rect.width * 2 - 1).toFixed(2);
-                            const y = ((event.clientY - rect.top) / rect.height * 2 - 1).toFixed(2);
-                            updateDotPosition(x, y);
-                        });
-
-                        // Initial call to set the rectangle overlay based on the default states
-                        updateRectangleOverlay(previewTd);
+                        dot.ondragstart = () => false;
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -256,7 +263,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         });
     } catch (error) {
-        console.error('Error:', error);
+        console.error('Error reading CSV:', error);
     }
 });
 

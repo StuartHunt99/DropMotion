@@ -136,3 +136,19 @@ th, td {
     pointer-events: none;
     z-index: 10;
 }
+
+.drop-cell {
+    position: relative; /* Ensure the drop cell is the containing block for absolutely positioned elements */
+    overflow: hidden; /* Hide anything that overflows the drop cell */
+}
+
+.overlay-rect, .base-rect {
+    position: absolute;
+    border: 2px solid;
+    pointer-events: none;
+    z-index: 10; /* Ensure the rectangles are above the image */
+}
+
+.base-rect {
+    border-color: yellow !important;
+}
