@@ -96,9 +96,13 @@ class VideoEditor:
         else:
             speed = 2
 
-        initial_scale = self._calculate_initial_scale(img_width, img_height)
-        final_scale = initial_scale * speed  # 150% of the initial scale
+        #initial_scale = self._calculate_initial_scale(img_width, img_height)
+        #final_scale = initial_scale * speed  # 150% of the initial scale
 
+        initial_scale = 100
+        final_scale = 200
+
+        # Build Element
         filter_element = ET.SubElement(clipitem, 'filter')
         effect = ET.SubElement(filter_element, 'effect')
         ET.SubElement(effect, 'name').text = "Basic Motion"
@@ -136,32 +140,59 @@ class VideoEditor:
         ET.SubElement(center_param, 'parameterid').text = "center"
         ET.SubElement(center_param, 'name').text = "Center"
 
-        # Determine Center keyframe times and relevant values
         click_coords = clip['clickCoordinates']
+
+        #Determin Margins
         horizontal_margin_pixels = ((img_width * (final_scale / 100)) - 1920) / 2
         vertical_margin_pixels = ((img_height * (final_scale / 100)) - 1080) / 2
 
-        # Convert limits to normalized coordinates
+        # Convert margins to normalized values
         horizontal_margin_normalized = horizontal_margin_pixels / (1920)
         vertical_margin_normalized = vertical_margin_pixels / (1080)
 
+        # Determine Center keyframe times and relevant values
         center_keyframe1_time = "0"
         center_keyframe2_time = str(duration)
         
+        #1 Normalize coords against image aspect ratio
+        if img_width > img_height:
+            aspect = img_width / img_height
+            normalized_coords = [-1 * (float(click_coords['x']) * aspect), -1 * (float(click_coords['y']))] 
+        else:
+            aspect = img_height / img_width
+            normalized_coords = [-1 * float(click_coords['x']), -1 * float(click_coords['y']) * aspect]             
+
+        #2 Convert coords to pixels 
+        # ************Different values here????
+        normalized_pix = [(normalized_coords[0] * (1920/2)) + 1920/2, (normalized_coords[1] * (1080/2)) + (1080/2) ]
+
+        #3 Get Centered Target Pixels adjusted for scale
+        target_pix = [(1920 + ((final_scale/100) * (normalized_pix[0] * (1920/2)))) / 2, (1080 + ((final_scale/100) * (normalized_pix[1] * (1080/2)))) / 2]
+
+        #4 Convert Target to Coords
+        final_coords = [((target_pix[0] * (final_scale/100)) - (1920 / 2)) / (1920 / 2), ((target_pix[1] * (final_scale/100)) - (1080 / 2)) / (1080 / 2)]
+
+        final_coords = [.26*2, .4629*2]
+        final_coords = [300/1920*2, 200/1080*2]
+        final_coords = [(float(click_coords['x']) / -2 * img_width) / 1920 * (final_scale/100), (float(click_coords['y']) / -2 * img_height / 1080) * (final_scale/100) ]
+
         if clip.get('zoom').lower() == "zoom_out":
             center_keyframe1_value = (
-                min(max(float(click_coords['x']), -horizontal_margin_normalized), horizontal_margin_normalized),
-                min(max(float(click_coords['y']), -vertical_margin_normalized), vertical_margin_normalized)
+                min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
+                min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
+            center_keyframe1_value = [final_coords[0], final_coords[1]]
             print(f"CenterFinal: {center_keyframe1_value[0]}, {center_keyframe1_value[1]}")
 
             center_keyframe2_value = ("0", "0")
         else:
             center_keyframe1_value = ("0", "0")
             center_keyframe2_value = (
-                min(max(float(click_coords['x']), -horizontal_margin_normalized), horizontal_margin_normalized),
-                min(max(float(click_coords['y']), -vertical_margin_normalized), vertical_margin_normalized)
+                min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
+                min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
+            center_keyframe2_value = [final_coords[0], final_coords[1]]
+
             print(f"CenterFinal: {center_keyframe2_value[0]}, {center_keyframe2_value[1]}")
 
 

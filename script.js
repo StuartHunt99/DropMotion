@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             console.log('Click coordinates relative to the image:', coordinates);
 
                             const dot = previewTd.querySelector('.click-dot');
-                            dot.style.left = `calc(${(parseFloat(x) + 0.5) * 100}% - 5px)`;
-                            dot.style.top = `calc(${(parseFloat(y) + 0.5) * 100}% - 5px)`;
+                            dot.style.left = `calc(${(parseFloat(x) + 1) * 50}% - 5px)`;
+                            dot.style.top = `calc(${(parseFloat(y) + 1) * 50}% - 5px)`;
                         }
 
                         // Create and position the initial dot at the center
@@ -152,12 +152,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             function moveAt(pageX, pageY) {
                                 const rect = img.getBoundingClientRect();
-                                let x = ((pageX - rect.left - shiftX + 5) / rect.width - 0.5).toFixed(2);
-                                let y = ((pageY - rect.top - shiftY + 5) / rect.height - 0.5).toFixed(2);
-                                if (x > 0.5) x = 0.5;
-                                if (x < -0.5) x = -0.5;
-                                if (y > 0.5) y = 0.5;
-                                if (y < -0.5) y = -0.5;
+                                let x = ((pageX - rect.left - shiftX + 5) / rect.width * 2 - 1).toFixed(2);
+                                let y = ((pageY - rect.top - shiftY + 5) / rect.height * 2 - 1).toFixed(2);
+                                if (x > 1) x = 1;
+                                if (x < -1) x = -1;
+                                if (y > 1) y = 1;
+                                if (y < -1) y = -1;
                                 updateDotPosition(x, y);
                             }
 
@@ -181,8 +181,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         img.addEventListener('click', (event) => {
                             const rect = img.getBoundingClientRect();
-                            const x = ((event.clientX - rect.left) / rect.width - 0.5).toFixed(2);
-                            const y = ((event.clientY - rect.top) / rect.height - 0.5).toFixed(2);
+                            const x = ((event.clientX - rect.left) / rect.width * 2 - 1).toFixed(2);
+                            const y = ((event.clientY - rect.top) / rect.height * 2 - 1).toFixed(2);
                             updateDotPosition(x, y);
                         });
                     };
@@ -214,16 +214,6 @@ document.getElementById('save-json-button').addEventListener('click', () => {
 
         if (markerNumber !== 'Marker Number' && markerTimecode) {
             const coordinates = clickCoordinates ? JSON.parse(clickCoordinates) : { x: 0, y: 0 };
-            // Map the coordinates to the 1920x1080 viewport
-            const viewportCoordinates = {
-                x: (coordinates.x * 1920 / imgWidth).toFixed(2),
-                y: (coordinates.y * 1080 / imgHeight).toFixed(2)
-            };
-            // Invert the coordinates for export
-            const invertedCoordinates = {
-                x: (-viewportCoordinates.x).toFixed(2),
-                y: (-viewportCoordinates.y).toFixed(2)
-            };
             jsonData.push({
                 markerNumber,
                 markerTimecode,
@@ -231,7 +221,7 @@ document.getElementById('save-json-button').addEventListener('click', () => {
                 filePath,
                 zoom: zoom || 'zoom_in',
                 speed: speed || 'slow',
-                clickCoordinates: invertedCoordinates
+                clickCoordinates: coordinates
             });
         }
     });
