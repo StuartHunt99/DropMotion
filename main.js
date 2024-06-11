@@ -38,7 +38,7 @@ ipcMain.on('save-json', async (event, data) => {
     fs.writeFileSync(savePath, data);
 
     // Run the Python script after saving the JSON file
-    exec('python3 xml-updater/xml-updater.py', (error, stdout, stderr) => {
+    exec('python3 xml-updater/xml-updater-2.py', (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing Python script: ${error.message}`);
             return;

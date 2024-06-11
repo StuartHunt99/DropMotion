@@ -146,15 +146,15 @@ class VideoEditor:
                         <keyframe>
                             <when>0</when>
                             <value>
-                            <horiz>{center_keyframe1_value[0]}</horiz>
-                            <vert>{center_keyframe1_value[1]}</vert>
+                                <horiz>{center_keyframe1_value[0]}</horiz>
+                                <vert>{center_keyframe1_value[1]}</vert>
                             </value>
                         </keyframe>
                         <keyframe>
                             <when>{duration}</when>
                             <value>
-                            <horiz>{center_keyframe2_value[0]}</horiz>
-                            <vert>{center_keyframe2_value[1]}</vert>
+                                <horiz>{center_keyframe2_value[0]}</horiz>
+                                <vert>{center_keyframe2_value[1]}</vert>
                             </value>
                         </keyframe>
                     </parameter>
@@ -197,24 +197,33 @@ class VideoEditor:
         </clipitem>
         """
 
-    def _get_final_coords(self, clip, img_width, img_height, final_scale):
+    def _get_final_coords(self, clip, img_width, img_height, initial_scale, final_scale):
         click_coords = clip['clickCoordinates']
 
-        #Determin Margins
+        # Determine Margins
         horizontal_margin_pixels = ((img_width * (final_scale / 100)) - 1920) / 2
         vertical_margin_pixels = ((img_height * (final_scale / 100)) - 1080) / 2
 
         # Convert margins to normalized values
-        horizontal_margin_normalized = horizontal_margin_pixels / (1920)
-        vertical_margin_normalized = vertical_margin_pixels / (1080)
+        horizontal_margin_normalized = horizontal_margin_pixels / 1920
+        vertical_margin_normalized = vertical_margin_pixels / 1080
 
-        final_coords = [(float(click_coords['x']) / -2 * img_width) / 1920 * (final_scale/100), (float(click_coords['y']) / -2 * img_height / 1080) * (final_scale/100) ]
+        # final_coords = [
+        #     (float(click_coords['x']) / -2 * img_width) / 1920 * (final_scale / 100),
+        #     (float(click_coords['y']) / -2 * img_height) / 1080 * (final_scale / 100)
+        # ]
 
+        final_coords = [
+            (((float(click_coords['x']) * img_width) / (img_width / 1920)) / -2) * (final_scale / 100) / 1920,
+            (((float(click_coords['y']) * img_height) / (img_height / 1080)) / -2) * (final_scale / 100) / 1080,
+        ]
+#(((A2 * B2) / E2) / -2) * (D2 / 100)
         if clip.get('zoom').lower() == "zoom_out":
             center_keyframe1_value = (
                 min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
                 min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
+            center_keyframe1_value = (final_coords[0], final_coords[1])
             print(f"CenterFinal: {center_keyframe1_value[0]}, {center_keyframe1_value[1]}")
 
             center_keyframe2_value = ("0", "0")
@@ -224,11 +233,11 @@ class VideoEditor:
                 min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
                 min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
+            center_keyframe2_value = (final_coords[0], final_coords[1])
 
             print(f"CenterFinal: {center_keyframe2_value[0]}, {center_keyframe2_value[1]}")
-      
+    
         return center_keyframe1_value, center_keyframe2_value
-        
 
     def add_clips_to_sequence(self):
         # Parse the original XML file
@@ -279,7 +288,7 @@ class VideoEditor:
             final_scale = initial_scale * speed
             duration = end_frame - start_frame
 
-            center_keyframe1_value, center_keyframe2_value = self._get_final_coords(clip, img_width, img_height, final_scale)
+            center_keyframe1_value, center_keyframe2_value = self._get_final_coords(clip, img_width, img_height, initial_scale, final_scale)
 
             clipitem_xml = self._generate_clipitem_xml(idx, clip, start_frame, end_frame, initial_scale, final_scale, duration, timebase, img_width, img_height, center_keyframe1_value, center_keyframe2_value)
             new_clipitem = ET.fromstring(clipitem_xml)
@@ -303,4 +312,4 @@ default_duration=10
 # Update the XML file with clips from JSON
 editor = VideoEditor(xml_file, json_file, output_file, scale_increment, default_duration)
 editor.add_clips_to_sequence()
-print("Version 2 complete.")
+print("Version 2 running...")
