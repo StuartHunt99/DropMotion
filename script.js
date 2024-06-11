@@ -79,6 +79,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        function setActiveImage(previewTd) {
+            document.querySelectorAll('.drop-cell.active').forEach(cell => {
+                cell.classList.remove('active');
+            });
+            previewTd.classList.add('active');
+        }
+
+        function moveDot(previewTd, dx, dy) {
+            const img = previewTd.querySelector('img');
+            if (!img) return;
+
+            const dot = previewTd.querySelector('.click-dot');
+            const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+
+            let x = parseFloat(dot.style.left.replace('calc(', '').replace('%) - 5px)', '')) / 50 - 1;
+            let y = parseFloat(dot.style.top.replace('calc(', '').replace('%) - 5px)', '')) / 50 - 1;
+
+            x += dx;
+            y += dy;
+
+            x = Math.max(-1, Math.min(1, x));
+            y = Math.max(-1, Math.min(1, y));
+
+            dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
+            dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
+
+            const coordinates = { x, y };
+            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+            updateRectangleOverlay(previewTd);
+        }
+
         results.forEach(row => {
             const tr = document.createElement('tr');
 
@@ -195,6 +226,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clickCoordinatesTd.dataset.imgWidth = '';
                             clickCoordinatesTd.dataset.imgHeight = '';
                             removeRectangleOverlay(previewTd);
+                            previewTd.classList.remove('active');
                         });
 
                         resetBtn.addEventListener('click', () => {
@@ -208,7 +240,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             updateRectangleOverlay(previewTd);
                         };
 
-                        // Function to update coordinates and dot position
+                        img.addEventListener('click', () => {
+                            setActiveImage(previewTd);
+                        });
+
                         function updateDotPosition(x, y) {
                             const coordinates = { x, y };
                             clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
@@ -220,14 +255,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             updateRectangleOverlay(previewTd);
                         }
 
-                        // Create and position the initial dot at the center
                         const dot = document.createElement('div');
                         dot.classList.add('click-dot');
                         dot.style.left = 'calc(50% - 5px)';
                         dot.style.top = 'calc(50% - 5px)';
                         previewTd.appendChild(dot);
 
-                        // Make the dot draggable
                         dot.addEventListener('mousedown', (event) => {
                             event.preventDefault();
                             const shiftX = event.clientX - dot.getBoundingClientRect().left;
@@ -274,6 +307,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     alert('Please drop a valid image file.');
                 }
             });
+        });
+
+        document.addEventListener('keydown', (event) => {
+            const activeCell = document.querySelector('.drop-cell.active');
+            if (!activeCell) return;
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    moveDot(activeCell, 0, -0.01);
+                    break;
+                case 'ArrowDown':
+                    moveDot(activeCell, 0, 0.01);
+                    break;
+                case 'ArrowLeft':
+                    moveDot(activeCell, -0.01, 0);
+                    break;
+                case 'ArrowRight':
+                    moveDot(activeCell, 0.01, 0);
+                    break;
+            }
         });
     } catch (error) {
         console.error('Error reading CSV:', error);

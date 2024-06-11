@@ -24,13 +24,17 @@ th, td {
 .drop-cell {
     border: 2px dashed #007bff;
     color: #007bff;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s, border 0.3s;
     position: relative;
     padding: 0;
 }
 
 .drop-cell.dragover {
     background-color: #e0e0e0;
+}
+
+.drop-cell.active {
+    border: 2px solid magenta;
 }
 
 .file-path {
@@ -138,15 +142,15 @@ th, td {
 }
 
 .drop-cell {
-    position: relative; /* Ensure the drop cell is the containing block for absolutely positioned elements */
-    overflow: hidden; /* Hide anything that overflows the drop cell */
+    position: relative;
+    overflow: hidden;
 }
 
 .overlay-rect, .base-rect {
     position: absolute;
     border: 2px solid;
     pointer-events: none;
-    z-index: 10; /* Ensure the rectangles are above the image */
+    z-index: 10;
 }
 
 .base-rect {
@@ -158,14 +162,14 @@ th, td {
 }
 
 .fixed-width {
-    width: 60px; /* Adjust this value as needed */
-    min-width: 60px; /* Ensure the column doesn't shrink below this width */
-    max-width: 60px; /* Ensure the column doesn't grow beyond this width */
-    word-wrap: break-word; /* Ensure text wraps within the fixed width */
+    width: 60px;
+    min-width: 60px;
+    max-width: 60px;
+    word-wrap: break-word;
 }
 
 .preview-column {
-    width: 400px; /* Adjust this value as needed */
-    min-width: 400px; /* Ensure the column doesn't shrink below this width */
-    max-width: 400px; /* Ensure the column doesn't grow beyond this width */
+    width: 400px;
+    min-width: 400px;
+    max-width: 400px;
 }
