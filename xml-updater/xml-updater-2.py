@@ -201,30 +201,23 @@ class VideoEditor:
         click_coords = clip['clickCoordinates']
 
         # Determine Margins
-        horizontal_margin_pixels = ((img_width * (final_scale / 100)) - 1920) / 2
-        vertical_margin_pixels = ((img_height * (final_scale / 100)) - 1080) / 2
+        horizontal_margin_pixels = (1920 - (img_width * (final_scale / 100))) / (1920 / -2)
+            vertical_margin_pixels = (1080 - (img_height * (final_scale / 100))) / (1080 / -2)
 
         # Convert margins to normalized values
-        horizontal_margin_normalized = horizontal_margin_pixels / 1920
-        vertical_margin_normalized = vertical_margin_pixels / 1080
-
-        # final_coords = [
-        #     (float(click_coords['x']) / -2 * img_width) / 1920 * (final_scale / 100),
-        #     (float(click_coords['y']) / -2 * img_height) / 1080 * (final_scale / 100)
-        # ]
+        horizontal_margin_normalized = horizontal_margin_pixels 
+        vertical_margin_normalized = vertical_margin_pixels 
 
         final_coords = [
             (((float(click_coords['x']) * img_width) / (img_width / 1920)) / -2) * (final_scale / 100) / 1920,
             (((float(click_coords['y']) * img_height) / (img_height / 1080)) / -2) * (final_scale / 100) / 1080,
         ]
-#(((A2 * B2) / E2) / -2) * (D2 / 100)
         if clip.get('zoom').lower() == "zoom_out":
             center_keyframe1_value = (
                 min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
                 min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
-            center_keyframe1_value = (final_coords[0], final_coords[1])
-            print(f"CenterFinal: {center_keyframe1_value[0]}, {center_keyframe1_value[1]}")
+            #center_keyframe1_value = (final_coords[0], final_coords[1])
 
             center_keyframe2_value = ("0", "0")
         else:
@@ -233,9 +226,15 @@ class VideoEditor:
                 min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
                 min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
             )
-            center_keyframe2_value = (final_coords[0], final_coords[1])
-
-            print(f"CenterFinal: {center_keyframe2_value[0]}, {center_keyframe2_value[1]}")
+            #center_keyframe2_value = (final_coords[0], final_coords[1])
+        print(" ")
+        print(f"Image Dimen: [{img_width}, {img_height}]")
+        print(f"Init Coords: {clip['clickCoordinates']}")
+        print(f"Calc Coords: {final_coords}")
+        print(f"Margin     : [{horizontal_margin_normalized}, {vertical_margin_normalized}]")
+        print(f"Final Scale: {final_scale}")
+        print(f"Key1 Coords: {center_keyframe1_value}")
+        print(f"Key2 Coords: {center_keyframe2_value}")
     
         return center_keyframe1_value, center_keyframe2_value
 
