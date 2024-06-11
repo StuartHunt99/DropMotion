@@ -1,4 +1,5 @@
 # DropMotion
+![Screenshot](screenshots/DM_Dark.png)
 ![Screenshot](screenshots/DM_ScreenShot.png)
 
 ## Features
