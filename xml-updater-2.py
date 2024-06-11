@@ -1,5 +1,5 @@
 import json
-import xml.etree.ElementTree as ET
+from lxml import etree as ET
 from PIL import Image
 import os
 
@@ -10,11 +10,22 @@ class VideoEditor:
         self.output_file = output_file
         self.scale_increment = scale_increment
         self.default_duration = default_duration
-        self.timebase = 24 
+        self.timebase = 24
 
     def _timecode_to_seconds(self, timecode):
-        hours, minutes, seconds, frames = map(int, timecode.split(':'))
-        total_seconds = hours * 3600 + minutes * 60 + seconds + frames / 24
+        time_parts = timecode.split(':')
+        
+        if len(time_parts) == 3 and '.' in time_parts[2]:
+            hours, minutes = map(int, time_parts[:2])
+            seconds, milliseconds = map(float, time_parts[2].split('.'))
+            frames = int(milliseconds * (24 / 1000))  # Assuming 24 frames per second
+        elif len(time_parts) == 4:
+            hours, minutes, seconds, frames = map(int, time_parts)
+        else:
+            raise ValueError(f"Unexpected timecode format: {timecode}")
+        
+        # Convert the timecode to seconds
+        total_seconds = hours * 3600 + minutes * 60 + seconds + frames / 24.0
         return total_seconds
 
     def _get_image_dimensions(self, image_path):
@@ -43,7 +54,7 @@ class VideoEditor:
         video.append(new_track)
         return new_track
 
-    def _generate_clipitem_xml(self, idx, clip, start_frame, end_frame, initial_scale, final_scale, duration, timebase, img_width, img_height):
+    def _generate_clipitem_xml(self, idx, clip, start_frame, end_frame, initial_scale, final_scale, duration, timebase, img_width, img_height, center_keyframe1_value, center_keyframe2_value):
         return f"""
         <clipitem id="clipitem-{idx + 1}">
             <masterclipid>masterclip-{idx + 1}</masterclipid>
@@ -86,8 +97,8 @@ class VideoEditor:
                                 <timebase>{timebase}</timebase>
                                 <ntsc>TRUE</ntsc>
                             </rate>
-                            <width>1920</width>
-                            <height>1080</height>
+                            <width>{img_width}</width>
+                            <height>{img_height}</height>
                             <anamorphic>FALSE</anamorphic>
                             <pixelaspectratio>square</pixelaspectratio>
                             <fielddominance>none</fielddominance>
@@ -135,15 +146,15 @@ class VideoEditor:
                         <keyframe>
                             <when>0</when>
                             <value>
-                                <horiz>0</horiz>
-                                <vert>0</vert>
+                            <horiz>{center_keyframe1_value[0]}</horiz>
+                            <vert>{center_keyframe1_value[1]}</vert>
                             </value>
                         </keyframe>
                         <keyframe>
                             <when>{duration}</when>
                             <value>
-                                <horiz>1.44</horiz>
-                                <vert>0</vert>
+                            <horiz>{center_keyframe2_value[0]}</horiz>
+                            <vert>{center_keyframe2_value[1]}</vert>
                             </value>
                         </keyframe>
                     </parameter>
@@ -186,17 +197,50 @@ class VideoEditor:
         </clipitem>
         """
 
-    def _add_clips_to_sequence(self, xml_file, json_file, output_file, scale_increment=150, default_duration=10):
+    def _get_final_coords(self, clip, img_width, img_height, final_scale):
+        click_coords = clip['clickCoordinates']
+
+        #Determin Margins
+        horizontal_margin_pixels = ((img_width * (final_scale / 100)) - 1920) / 2
+        vertical_margin_pixels = ((img_height * (final_scale / 100)) - 1080) / 2
+
+        # Convert margins to normalized values
+        horizontal_margin_normalized = horizontal_margin_pixels / (1920)
+        vertical_margin_normalized = vertical_margin_pixels / (1080)
+
+        final_coords = [(float(click_coords['x']) / -2 * img_width) / 1920 * (final_scale/100), (float(click_coords['y']) / -2 * img_height / 1080) * (final_scale/100) ]
+
+        if clip.get('zoom').lower() == "zoom_out":
+            center_keyframe1_value = (
+                min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
+                min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
+            )
+            print(f"CenterFinal: {center_keyframe1_value[0]}, {center_keyframe1_value[1]}")
+
+            center_keyframe2_value = ("0", "0")
+        else:
+            center_keyframe1_value = ("0", "0")
+            center_keyframe2_value = (
+                min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
+                min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
+            )
+
+            print(f"CenterFinal: {center_keyframe2_value[0]}, {center_keyframe2_value[1]}")
+      
+        return center_keyframe1_value, center_keyframe2_value
+        
+
+    def add_clips_to_sequence(self):
         # Parse the original XML file
-        tree = ET.parse(xml_file)
+        tree = ET.parse(self.xml_file)
         root = tree.getroot()
 
         # Load the JSON file
-        with open(json_file, 'r') as f:
+        with open(self.json_file, 'r') as f:
             clips_data = json.load(f)
 
         timebase = 24  # Assuming the sequence timebase is 24 fps
-        sequence = root.find('.//sequence[@id="sequence-3"]')
+        sequence = root.find('.//sequence[@id="sequence-2"]')
         media = sequence.find('.//media')
         video = media.find('video')
 
@@ -212,11 +256,15 @@ class VideoEditor:
         for idx, clip in enumerate(clips_data):
             start_time_seconds = self._timecode_to_seconds(clip['markerTimecode'])
             start_frame = int(start_time_seconds * self.timebase)
-            duration_frames = int(default_duration * self.timebase)
+            duration_frames = int(self.default_duration * self.timebase) - 1
+            if clip['speed'] == 'slow':
+                speed = 1.5
+            else:
+                speed = 2
 
             # Calculate end frame based on next clip's start time or default duration
             if idx < len(clips_data) - 1:
-                next_start_time_seconds = self.timecode_to_seconds(clips_data[idx + 1]['markerTimecode'])
+                next_start_time_seconds = self._timecode_to_seconds(clips_data[idx + 1]['markerTimecode'])
                 next_start_frame = int(next_start_time_seconds * timebase)
                 end_frame = min(start_frame + duration_frames, next_start_frame)
             else:
@@ -226,28 +274,33 @@ class VideoEditor:
             if not os.path.isabs(img_path):
                 img_path = os.path.join(script_dir, img_path.lstrip('/'))  # Correctly form the absolute path
 
-            img_width, img_height = self.get_image_dimensions(img_path)
-            initial_scale = self.calculate_initial_scale(img_width, img_height)
-            final_scale = initial_scale + scale_increment
+            img_width, img_height = self._get_image_dimensions(img_path)
+            initial_scale = self._calculate_initial_scale(img_width, img_height)
+            final_scale = initial_scale * speed
             duration = end_frame - start_frame
 
-            clipitem_xml = self.generate_clipitem_xml(idx, clip, start_frame, end_frame, initial_scale, final_scale, duration, timebase, img_width, img_height)
+            center_keyframe1_value, center_keyframe2_value = self._get_final_coords(clip, img_width, img_height, final_scale)
+
+            clipitem_xml = self._generate_clipitem_xml(idx, clip, start_frame, end_frame, initial_scale, final_scale, duration, timebase, img_width, img_height, center_keyframe1_value, center_keyframe2_value)
             new_clipitem = ET.fromstring(clipitem_xml)
 
             # Append the new clipitem to the new video track
             new_track.append(new_clipitem)
 
         # Write the updated XML to a new file with scale effects
-        tree.write(output_file, encoding='UTF-8', xml_declaration=True)
+        tree.write(self.output_file, encoding='UTF-8', xml_declaration=True, pretty_print=True)
 
 # Get the directory of the script
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Parameters for the new clips
 json_file = os.path.join(script_dir, "updated_spreadsheet.json")
-xml_file = os.path.join(script_dir, "TEST_ZOOM_PAN.xml")
-output_file = os.path.join(script_dir, "UPDATED_TEST_ZOOM_PAN.xml")
+xml_file = os.path.join(script_dir, "base-file.xml")
+output_file = os.path.join(script_dir, "export.xml")
+scale_increment = 150 
+default_duration=10
 
 # Update the XML file with clips from JSON
-editor = VideoEditor(xml_file, json_file, output_file)
+editor = VideoEditor(xml_file, json_file, output_file, scale_increment, default_duration)
 editor.add_clips_to_sequence()
+print("Version 2 complete.")

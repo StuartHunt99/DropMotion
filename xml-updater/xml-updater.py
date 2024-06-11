@@ -227,8 +227,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Parameters for the new clips
 json_file = os.path.join(script_dir, "updated_spreadsheet.json")
-xml_file = os.path.join(script_dir, "TEST_ZOOM_PAN.xml")
-output_file = os.path.join(script_dir, "UPDATED_TEST_ZOOM_PAN.xml")
+xml_file = os.path.join(script_dir, "base-file.xml")
+output_file = os.path.join(script_dir, "export-1.xml")
 
 # Update the XML file with clips from JSON
 editor = VideoEditor(xml_file, json_file, output_file)
