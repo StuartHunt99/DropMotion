@@ -287,25 +287,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             function moveAt(pageX, pageY) {
                                 const rect = img.getBoundingClientRect();
-                                let x = ((pageX - rect.left - shiftX + 5) / rect.width) * 2 - 1;
-                                let y = ((pageY - rect.top - shiftY + 5) / rect.height) * 2 - 1;
-
+                            
+                                const scrollX = window.scrollX || window.pageXOffset;
+                                const scrollY = window.scrollY || window.pageYOffset;
+                                
+                                let x = ((pageX - (rect.left + scrollX) - shiftX + 5) / rect.width) * 2 - 1;
+                                let y = ((pageY - (rect.top + scrollY) - shiftY + 5) / rect.height) * 2 - 1;
+                            
                                 const overlayRect = previewTd.querySelector('.overlay-rect');
                                 const overlayRectWidth = parseFloat(overlayRect.style.width);
                                 const overlayRectHeight = parseFloat(overlayRect.style.height);
-
+                            
+                                // Apply boundary constraints to ensure the dot stays within the image bounds
                                 x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
                                 y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
 
                                 dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
                                 dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
-
+                            
+                                // Store the coordinates in the closest hidden-cell for later use
                                 const coordinates = { x, y };
                                 const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
                                 clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+
                                 updateRectangleOverlay(previewTd);
                             }
-
+                            
                             function onMouseMove(event) {
                                 moveAt(event.pageX, event.pageY);
                             }
