@@ -130,7 +130,7 @@ th, td {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: red;
+    background-color: rgb(255, 72, 0);
     cursor: pointer;
 }
 
@@ -154,7 +154,12 @@ th, td {
 }
 
 .base-rect {
+    position: absolute;
+    border: 2px solid;
+    pointer-events: none;
+    z-index: 10; /* Ensure the rectangles are above the image */
     border-color: yellow !important;
+    box-sizing: border-box; /* Ensure the border is included within the element's total width and height */
 }
 
 .hidden-cell {
@@ -173,3 +178,9 @@ th, td {
     min-width: 400px;
     max-width: 400px;
 }
+
+.active-row {
+    background-color: lightblue;
+}
+
+

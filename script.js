@@ -79,11 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        function setActiveImage(previewTd) {
-            document.querySelectorAll('.drop-cell.active').forEach(cell => {
-                cell.classList.remove('active');
+        function setActiveRow(tr) {
+            document.querySelectorAll('.active-row').forEach(row => {
+                row.classList.remove('active-row');
             });
-            previewTd.classList.add('active');
+            tr.classList.add('active-row');
         }
 
         function moveDot(previewTd, dx, dy) {
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
             dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
-            console.log('Click coordinates relative to the image:', coordinates);
+
             updateRectangleOverlay(previewTd);
         }
 
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             clickCoordinatesTd.dataset.imgWidth = '';
                             clickCoordinatesTd.dataset.imgHeight = '';
                             removeRectangleOverlay(previewTd);
-                            previewTd.classList.remove('active');
+                            tr.classList.remove('active-row');
                         });
 
                         resetBtn.addEventListener('click', (event) => {
@@ -268,7 +268,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         };
 
                         img.addEventListener('click', () => {
-                            setActiveImage(previewTd);
+                            setActiveRow(tr);
+                            previewTd.classList.add('active');
                         });
 
                         const dot = document.createElement('div');
@@ -279,6 +280,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         dot.addEventListener('mousedown', (event) => {
                             event.preventDefault();
+                            setActiveRow(tr);
+                            previewTd.classList.add('active');
                             const shiftX = event.clientX - dot.getBoundingClientRect().left;
                             const shiftY = event.clientY - dot.getBoundingClientRect().top;
 
@@ -319,6 +322,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
 
                         previewTd.addEventListener('click', (event) => {
+                            setActiveRow(tr);
+                            previewTd.classList.add('active');
                             const rect = img.getBoundingClientRect();
                             const offsetX = event.clientX - rect.left;
                             const offsetY = event.clientY - rect.top;
@@ -343,23 +348,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         document.addEventListener('keydown', (event) => {
-            const activeCell = document.querySelector('.drop-cell.active');
-            if (!activeCell) return;
+            const activeRow = document.querySelector('.active-row');
+            if (!activeRow) return;
+
+            const previewTd = activeRow.querySelector('.drop-cell.active');
+            if (!previewTd) return;
 
             const increment = event.shiftKey ? 0.1 : 0.01;
 
             switch (event.key) {
                 case 'ArrowUp':
-                    moveDot(activeCell, 0, -increment);
+                    moveDot(previewTd, 0, -increment);
                     break;
                 case 'ArrowDown':
-                    moveDot(activeCell, 0, increment);
+                    moveDot(previewTd, 0, increment);
                     break;
                 case 'ArrowLeft':
-                    moveDot(activeCell, -increment, 0);
+                    moveDot(previewTd, -increment, 0);
                     break;
                 case 'ArrowRight':
-                    moveDot(activeCell, increment, 0);
+                    moveDot(previewTd, increment, 0);
                     break;
             }
         });

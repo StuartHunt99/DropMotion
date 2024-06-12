@@ -46,11 +46,7 @@ table.night-mode th, table.night-mode td {
     transition: border-color 0.5s;
 }
 
-.night-mode .click-dot {
-    background-color: #ff4081;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.5s, box-shadow 0.5s;
-}
+
 
 .night-mode .drop-cell {
     color: #ffaf45;
@@ -90,4 +86,8 @@ table.night-mode th, table.night-mode td {
 .save-json-btn:hover {
     background: linear-gradient(45deg, #3700b3, #6200ea);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.night-mode .active-row {
+    background-color: #494968;
 }
