@@ -115,6 +115,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateRectangleOverlay(previewTd);
         }
 
+        function updateDotPosition(previewTd, x, y) {
+            const coordinates = { x, y };
+            const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+
+            const dot = previewTd.querySelector('.click-dot');
+            const rect = previewTd.querySelector('img').getBoundingClientRect();
+            const overlayRect = previewTd.querySelector('.overlay-rect');
+            const overlayRectWidth = parseFloat(overlayRect.style.width);
+            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+            dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
+            dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
+            console.log('Click coordinates relative to the image:', coordinates);
+            updateRectangleOverlay(previewTd);
+        }
+
         results.forEach(row => {
             const tr = document.createElement('tr');
 
@@ -237,7 +257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         resetBtn.addEventListener('click', (event) => {
                             event.stopPropagation();
-                            updateDotPosition(0, 0);
+                            updateDotPosition(previewTd, 0, 0);
                             updateRectangleOverlay(previewTd);
                         });
 
@@ -250,26 +270,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         img.addEventListener('click', () => {
                             setActiveImage(previewTd);
                         });
-
-                        function updateDotPosition(x, y) {
-                            const coordinates = { x, y };
-                            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
-                            console.log('Click coordinates relative to the image:', coordinates);
-
-                            const dot = previewTd.querySelector('.click-dot');
-                            const rect = img.getBoundingClientRect();
-                            const overlayRect = previewTd.querySelector('.overlay-rect');
-                            const overlayRectWidth = parseFloat(overlayRect.style.width);
-                            const overlayRectHeight = parseFloat(overlayRect.style.height);
-
-                            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
-                            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-
-                            dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
-                            dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
-
-                            updateRectangleOverlay(previewTd);
-                        }
 
                         const dot = document.createElement('div');
                         dot.classList.add('click-dot');
@@ -296,7 +296,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                                 dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
                                 dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
-                                updateDotPosition(x, y);
+
+                                const coordinates = { x, y };
+                                const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+                                clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+                                updateRectangleOverlay(previewTd);
                             }
 
                             function onMouseMove(event) {
@@ -315,12 +319,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
 
                         previewTd.addEventListener('click', (event) => {
-                            const rect = previewTd.getBoundingClientRect();
+                            const rect = img.getBoundingClientRect();
                             const offsetX = event.clientX - rect.left;
                             const offsetY = event.clientY - rect.top;
-                            const x = (offsetX / rect.width) * 2 - 1;
-                            const y = (offsetY / rect.height) * 2 - 1;
-                            updateDotPosition(x, y);
+                            let x = (offsetX / rect.width) * 2 - 1;
+                            let y = (offsetY / rect.height) * 2 - 1;
+
+                            const overlayRect = previewTd.querySelector('.overlay-rect');
+                            const overlayRectWidth = parseFloat(overlayRect.style.width);
+                            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+                            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+                            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+                            updateDotPosition(previewTd, x, y);
                         });
                     };
                     reader.readAsDataURL(file);

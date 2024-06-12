@@ -213,19 +213,10 @@ class VideoEditor:
             (((float(click_coords['y']) * img_height) / (img_height / 1080)) / -2) * (final_scale / 100) / 1080,
         ]
         if clip.get('zoom').lower() == "zoom_out":
-            # center_keyframe1_value = (
-            #     min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
-            #     min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
-            # )
             center_keyframe1_value = (final_coords[0], final_coords[1])
-
             center_keyframe2_value = ("0", "0")
         else:
             center_keyframe1_value = ("0", "0")
-            # center_keyframe2_value = (
-            #     min(max(float(final_coords[0]), -horizontal_margin_normalized), horizontal_margin_normalized),
-            #     min(max(float(final_coords[1]), -vertical_margin_normalized), vertical_margin_normalized)
-            # )
             center_keyframe2_value = (final_coords[0], final_coords[1])
 
         print(" ")
