@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const dot = previewTd.querySelector('.click-dot');
             const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+            const overlayRect = previewTd.querySelector('.overlay-rect');
 
             let x = parseFloat(dot.style.left.replace('calc(', '').replace('%) - 5px)', '')) / 50 - 1;
             let y = parseFloat(dot.style.top.replace('calc(', '').replace('%) - 5px)', '')) / 50 - 1;
@@ -99,8 +100,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             x += dx;
             y += dy;
 
-            x = Math.max(-1, Math.min(1, x));
-            y = Math.max(-1, Math.min(1, y));
+            const rect = img.getBoundingClientRect();
+            const overlayRectWidth = parseFloat(overlayRect.style.width);
+            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
 
             dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
             dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
@@ -218,7 +223,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         filePathTd.textContent = file.path;
                         filePathTd.setAttribute('data-full-path', file.path);
 
-                        deleteBtn.addEventListener('click', () => {
+                        deleteBtn.addEventListener('click', (event) => {
+                            event.stopPropagation();
                             previewTd.innerHTML = 'Drop image here';
                             filePathTd.textContent = '';
                             filePathTd.removeAttribute('data-full-path');
@@ -229,7 +235,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             previewTd.classList.remove('active');
                         });
 
-                        resetBtn.addEventListener('click', () => {
+                        resetBtn.addEventListener('click', (event) => {
+                            event.stopPropagation();
                             updateDotPosition(0, 0);
                             updateRectangleOverlay(previewTd);
                         });
@@ -250,8 +257,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             console.log('Click coordinates relative to the image:', coordinates);
 
                             const dot = previewTd.querySelector('.click-dot');
-                            dot.style.left = `calc(${(parseFloat(x) + 1) * 50}% - 5px)`;
-                            dot.style.top = `calc(${(parseFloat(y) + 1) * 50}% - 5px)`;
+                            const rect = img.getBoundingClientRect();
+                            const overlayRect = previewTd.querySelector('.overlay-rect');
+                            const overlayRectWidth = parseFloat(overlayRect.style.width);
+                            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+                            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+                            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+                            dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
+                            dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
+
                             updateRectangleOverlay(previewTd);
                         }
 
@@ -270,12 +286,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 const rect = img.getBoundingClientRect();
                                 let x = ((pageX - rect.left - shiftX + 5) / rect.width) * 2 - 1;
                                 let y = ((pageY - rect.top - shiftY + 5) / rect.height) * 2 - 1;
-                                x = Math.max(-1, Math.min(1, x));
-                                y = Math.max(-1, Math.min(1, y));
+
+                                const overlayRect = previewTd.querySelector('.overlay-rect');
+                                const overlayRectWidth = parseFloat(overlayRect.style.width);
+                                const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+                                x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+                                y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
                                 dot.style.left = `calc(${(x + 1) * 50}% - 5px)`;
                                 dot.style.top = `calc(${(y + 1) * 50}% - 5px)`;
                                 updateDotPosition(x, y);
-                                updateRectangleOverlay(previewTd);
                             }
 
                             function onMouseMove(event) {
@@ -313,18 +334,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             const activeCell = document.querySelector('.drop-cell.active');
             if (!activeCell) return;
 
+            const increment = event.shiftKey ? 0.1 : 0.01;
+
             switch (event.key) {
                 case 'ArrowUp':
-                    moveDot(activeCell, 0, -0.01);
+                    moveDot(activeCell, 0, -increment);
                     break;
                 case 'ArrowDown':
-                    moveDot(activeCell, 0, 0.01);
+                    moveDot(activeCell, 0, increment);
                     break;
                 case 'ArrowLeft':
-                    moveDot(activeCell, -0.01, 0);
+                    moveDot(activeCell, -increment, 0);
                     break;
                 case 'ArrowRight':
-                    moveDot(activeCell, 0.01, 0);
+                    moveDot(activeCell, increment, 0);
                     break;
             }
         });
