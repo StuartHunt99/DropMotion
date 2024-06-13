@@ -127,11 +127,20 @@ th, td {
 
 .click-dot {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: rgb(255, 72, 0);
+    width: 60px;
+    height: 60px;
     cursor: pointer;
+    border: 2px solid;
+    border-color: yellow;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.click-dot .inner-dot {
+    width: 5px;
+    height: 5px;
+    background-color: yellow;
 }
 
 .overlay-rect {
