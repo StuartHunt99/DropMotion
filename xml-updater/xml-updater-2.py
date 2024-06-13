@@ -254,6 +254,10 @@ class VideoEditor:
         video.append(new_track)
 
         for idx, clip in enumerate(clips_data):
+            # Skip processing if filePath is empty
+            if not clip.get('filePath'):
+                continue
+
             start_time_seconds = self._timecode_to_seconds(clip['markerTimecode'])
             start_frame = int(start_time_seconds * self.timebase)
             duration_frames = int(self.default_duration * self.timebase) - 1
@@ -274,7 +278,12 @@ class VideoEditor:
             if not os.path.isabs(img_path):
                 img_path = os.path.join(script_dir, img_path.lstrip('/'))  # Correctly form the absolute path
 
-            img_width, img_height = self._get_image_dimensions(img_path)
+            try:
+                img_width, img_height = self._get_image_dimensions(img_path)
+            except (FileNotFoundError, PermissionError) as e:
+                print(f"Error opening image {img_path}: {e}")
+                continue
+
             initial_scale = self._calculate_initial_scale(img_width, img_height)
             final_scale = initial_scale * speed
             duration = end_frame - start_frame
