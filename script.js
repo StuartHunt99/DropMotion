@@ -462,6 +462,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         console.error('Error reading CSV:', error);
     }
+
+    document.addEventListener('keydown', (event) => {
+        const activeRow = document.querySelector('.active-row');
+        if (!activeRow) return;
+
+        const previewTd = activeRow.querySelector('.drop-cell.active');
+        if (!previewTd) return;
+
+        const increment = event.shiftKey ? 0.1 : 0.01;
+        let handled = false;
+
+        switch (event.key) {
+            case 'ArrowUp':
+                moveDot(previewTd, 0, -increment);
+                handled = true;
+                break;
+            case 'ArrowDown':
+                moveDot(previewTd, 0, increment);
+                handled = true;
+                break;
+            case 'ArrowLeft':
+                moveDot(previewTd, -increment, 0);
+                handled = true;
+                break;
+            case 'ArrowRight':
+                moveDot(previewTd, increment, 0);
+                handled = true;
+                break;
+        }
+
+        if (handled) {
+            event.preventDefault(); // Prevent the default action of the arrow keys (scrolling)
+        }
+    });
 });
 
 document.getElementById('save-json-button').addEventListener('click', () => {
