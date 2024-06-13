@@ -6,6 +6,8 @@ body {
     height: 100vh;
     margin: 0;
     background-color: #f0f0f0;
+    user-select: none;
+
 }
 
 table {
@@ -79,6 +81,8 @@ th, td {
     height: 100%;
     object-fit: cover;
     display: block;
+    pointer-events: none;
+
 }
 
 .delete-btn, .reset-btn {
