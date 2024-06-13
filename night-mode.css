@@ -90,4 +90,5 @@ table.night-mode th, table.night-mode td {
 
 body.night-mode .active-row {
     background-color: #494968;
+    transition: background-color 0.5s;
 }
