@@ -14,7 +14,7 @@
 
 - Adobe Premiere Pro
 - Node.js
-- Electron
+- Electron  
 
 ## How It Works
 
