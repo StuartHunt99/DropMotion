@@ -20,18 +20,6 @@ ipcMain.handle('read-csv', async (event) => {
     });
 });
 
-ipcMain.on('save-csv', async (event, data) => {
-    const { filePath } = await dialog.showSaveDialog({
-        title: 'Save CSV',
-        defaultPath: path.join(__dirname, 'updated_spreadsheet.csv'),
-        filters: [{ name: 'CSV Files', extensions: ['csv'] }]
-    });
-
-    if (filePath) {
-        fs.writeFileSync(filePath, data);
-    }
-});
-
 ipcMain.on('save-json', async (event, data) => {
     const savePath = path.join(__dirname, 'xml-updater', 'updated_spreadsheet.json');
     
