@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import pandas as pd
 import chardet
@@ -45,11 +46,15 @@ def read_csv_with_auto_encoding(file_path, delimiter=','):
 # Get the directory of the script
 script_dir = os.path.dirname(__file__)
 
-# Define the file paths
-transcript_file = os.path.join(script_dir, 'transcript.csv')
-markers_file = os.path.join(script_dir, 'markers.csv')
+# Define the default file paths
+default_transcript_file = os.path.join(script_dir, 'transcript.csv')
+default_markers_file = os.path.join(script_dir, 'markers.csv')
 output_file = os.path.join(script_dir, 'base_table.csv')
 fps = 30  # Default frame rate
+
+# Get file paths from command line arguments or use defaults
+transcript_file = sys.argv[1] if len(sys.argv) > 1 else default_transcript_file
+markers_file = sys.argv[2] if len(sys.argv) > 2 else default_markers_file
 
 # Load transcript into a list of dictionaries
 transcript = read_csv_with_auto_encoding(transcript_file)
