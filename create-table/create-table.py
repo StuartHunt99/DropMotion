@@ -6,8 +6,23 @@ from datetime import datetime, timedelta
 
 # Helper function to convert timecode to seconds
 def timecode_to_seconds(timecode):
-    h, m, s, ms = map(int, timecode.split(':'))
-    return h * 3600 + m * 60 + s + ms / 1000
+    parts = timecode.split(':')
+    if len(parts) == 3:
+        h, m, s = parts
+        ms = 0
+    elif len(parts) == 4:
+        h, m, s, ms = parts
+    else:
+        raise ValueError(f"Invalid timecode format: {timecode}")
+    
+    s_parts = s.split('.')
+    if len(s_parts) == 2:
+        s, ms = s_parts
+    else:
+        s = s_parts[0]
+        ms = 0
+    
+    return int(h) * 3600 + int(m) * 60 + int(s) + int(ms) / 1000
 
 # Function to detect encoding of a file
 def detect_encoding(file_path):

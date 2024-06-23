@@ -304,7 +304,7 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Parameters for the new clips
 json_file = os.path.join(script_dir, "updated_spreadsheet.json")
-xml_file = os.path.join(script_dir, "base-file.xml")
+xml_file = os.path.join(script_dir, "base-sequence.xml")
 output_file = os.path.join(script_dir, "export.xml")
 scale_increment = 150 
 default_duration=10

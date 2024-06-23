@@ -6,7 +6,7 @@ const { exec } = require('child_process');  // Import exec from child_process
 
 ipcMain.handle('read-csv', async (event) => {
     const results = [];
-    const filePath = path.join(__dirname, 'output_spreadsheet.csv');
+    const filePath = path.join(__dirname, 'create-table/base_table.csv');
     return new Promise((resolve, reject) => {
         fs.createReadStream(filePath)
             .pipe(csv())
