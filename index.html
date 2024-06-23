@@ -8,26 +8,29 @@
     <link rel="stylesheet" href="night-mode.css">
 </head>
 <body>
-<button id="night-mode-toggle" class="night-mode-btn">Night Mode</button>
+    <div class="content-container">
+        <div class="top-right-container">
+            <button id="night-mode-toggle" class="night-mode-btn">Night Mode</button>
+        </div>
+        
+        <table id="csv-table">
+            <thead>
+                <tr id="csv-header">
+                    <th>Marker Number</th>
+                    <th>Marker Timecode</th>
+                    <th>Caption</th>
+                    <th>File Path</th>
+                    <th class="preview-column">Preview</th>
+                    <th class="fixed-width">Zoom</th>
+                    <th class="fixed-width">Speed</th>
+                </tr>
+            </thead>
+            <tbody id="csv-body"></tbody>
+        </table>
 
-<table id="csv-table">
-    <thead>
-        <tr id="csv-header">
-            <th>Marker Number</th>
-            <th>Marker Timecode</th>
-            <th>Caption</th>
-            <th>File Path</th>
-            <th class="preview-column">Preview</th>
-            <th class="fixed-width">Zoom</th>
-            <th class="fixed-width">Speed</th>
-        </tr>
-    </thead>
-    <tbody id="csv-body"></tbody>
-</table>
+        <button id="save-json-button" class="save-json-btn">Export</button>
+    </div>
 
-<button id="save-json-button">Export</button>
-
-<script src="script.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
