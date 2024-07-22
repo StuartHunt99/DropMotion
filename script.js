@@ -1,4 +1,41 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    let markerFilePath = null;
+    let transcriptFilePath = null;
+
+    const updateFileStatus = (fileType, filePath) => {
+        const statusElement = document.getElementById(`${fileType}-file-status`);
+        if (filePath) {
+            statusElement.textContent = '✔️';
+        } else {
+            statusElement.textContent = '❌';
+        }
+    };
+
+    document.getElementById('select-marker-file').addEventListener('click', async () => {
+        markerFilePath = await window.electron.selectFile();
+        updateFileStatus('marker', markerFilePath);
+    });
+
+    document.getElementById('select-transcript-file').addEventListener('click', async () => {
+        transcriptFilePath = await window.electron.selectFile();
+        updateFileStatus('transcript', transcriptFilePath);
+    });
+
+    document.getElementById('run-script-button').addEventListener('click', async () => {
+        if (!markerFilePath || !transcriptFilePath) {
+            alert('Please select both files before running the script.');
+            return;
+        }
+        try {
+            await window.electron.runPythonScript(transcriptFilePath, markerFilePath);
+            alert('Python script executed successfully.');
+            location.reload(); // Reload the page
+        } catch (error) {
+            console.error('Error running Python script:', error);
+            alert('An error occurred while running the Python script.');
+        }
+    });
+
     try {
         const results = await window.electron.readCSV();
         const tableBody = document.getElementById('csv-body');
@@ -7,65 +44,69 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.body.classList.toggle('night-mode');
         });
 
-        function createClickDot(previewTd) {
+        if (results.length === 0) {
+            console.warn('No data found in base_table.csv, loading a blank table.');
+        }
+
+        function createClickDot(previewTd, tr, img) {
             const dot = document.createElement('div');
             dot.classList.add('click-dot');
             dot.style.left = 'calc(50% - 30px)';
             dot.style.top = 'calc(50% - 30px)';
-    
+
             const innerDot = document.createElement('div');
             innerDot.classList.add('inner-dot');
             dot.appendChild(innerDot);
-    
+
             previewTd.appendChild(dot);
-    
+
             dot.addEventListener('mousedown', (event) => {
                 event.preventDefault();
                 setActiveRow(tr);
                 previewTd.classList.add('active');
                 const shiftX = event.clientX - dot.getBoundingClientRect().left;
                 const shiftY = event.clientY - dot.getBoundingClientRect().top;
-    
+
                 function moveAt(pageX, pageY) {
                     const rect = img.getBoundingClientRect();
                     const scrollX = window.scrollX || window.pageXOffset;
                     const scrollY = window.scrollY || window.pageYOffset;
-    
+
                     let x = ((pageX - (rect.left + scrollX) - shiftX + 30) / rect.width) * 2 - 1;
                     let y = ((pageY - (rect.top + scrollY) - shiftY + 30) / rect.height) * 2 - 1;
-    
+
                     const overlayRect = previewTd.querySelector('.overlay-rect');
                     const overlayRectWidth = parseFloat(overlayRect.style.width);
                     const overlayRectHeight = parseFloat(overlayRect.style.height);
-    
+
                     x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
                     y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-    
+
                     dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
                     dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
-    
+
                     const coordinates = { x, y };
                     const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
                     clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
-    
+
                     updateRectangleOverlay(previewTd);
                 }
-    
+
                 function onMouseMove(event) {
                     moveAt(event.pageX, event.pageY);
                 }
-    
+
                 const onMouseUpOrLeave = () => {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUpOrLeave);
                     document.removeEventListener('mouseleave', onMouseUpOrLeave);
                 };
-    
+
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUpOrLeave);
                 document.addEventListener('mouseleave', onMouseUpOrLeave);
             });
-    
+
             previewTd.addEventListener('click', (event) => {
                 setActiveRow(tr);
                 previewTd.classList.add('active');
@@ -74,17 +115,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const offsetY = event.clientY - rect.top;
                 let x = (offsetX / rect.width) * 2 - 1;
                 let y = (offsetY / rect.height) * 2 - 1;
-    
+
                 const overlayRect = previewTd.querySelector('.overlay-rect');
                 const overlayRectWidth = parseFloat(overlayRect.style.width);
                 const overlayRectHeight = parseFloat(overlayRect.style.height);
-    
+
                 x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
                 y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-    
+
                 updateDotPosition(previewTd, x, y);
             });
-    
+
             return dot;
         }
 
@@ -353,80 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             previewTd.classList.add('active');
                         });
 
-                        const dot = createClickDot(previewTd);
-                        dot.classList.add('click-dot');
-                        dot.style.left = 'calc(50% - 30px)';
-                        dot.style.top = 'calc(50% - 30px)';
+                        const dot = createClickDot(previewTd, tr, img);
                         previewTd.appendChild(dot);
-
-                        dot.addEventListener('mousedown', (event) => {
-                            event.preventDefault();
-                            setActiveRow(tr);
-                            previewTd.classList.add('active');
-                            const shiftX = event.clientX - dot.getBoundingClientRect().left;
-                            const shiftY = event.clientY - dot.getBoundingClientRect().top;
-
-                            function moveAt(pageX, pageY) {
-                                const rect = img.getBoundingClientRect();
-                            
-                                const scrollX = window.scrollX || window.pageXOffset;
-                                const scrollY = window.scrollY || window.pageYOffset;
-                                
-                                let x = ((pageX - (rect.left + scrollX) - shiftX + 30) / rect.width) * 2 - 1;
-                                let y = ((pageY - (rect.top + scrollY) - shiftY + 30) / rect.height) * 2 - 1;
-                            
-                                const overlayRect = previewTd.querySelector('.overlay-rect');
-                                const overlayRectWidth = parseFloat(overlayRect.style.width);
-                                const overlayRectHeight = parseFloat(overlayRect.style.height);
-                            
-                                // Apply boundary constraints to ensure the dot stays within the image bounds
-                                x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
-                                y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-
-                                dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
-                                dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
-                            
-                                // Store the coordinates in the closest hidden-cell for later use
-                                const coordinates = { x, y };
-                                const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
-                                clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
-
-                                updateRectangleOverlay(previewTd);
-                            }
-                            
-                            function onMouseMove(event) {
-                                moveAt(event.pageX, event.pageY);
-                            }
-
-                            const onMouseUpOrLeave = () => {
-                                document.removeEventListener('mousemove', onMouseMove);
-                                document.removeEventListener('mouseup', onMouseUpOrLeave);
-                                document.removeEventListener('mouseleave', onMouseUpOrLeave);
-                            };
-
-                            document.addEventListener('mousemove', onMouseMove);
-                            document.addEventListener('mouseup', onMouseUpOrLeave);
-                            document.addEventListener('mouseleave', onMouseUpOrLeave);
-                        });
-
-                        previewTd.addEventListener('click', (event) => {
-                            setActiveRow(tr);
-                            previewTd.classList.add('active');
-                            const rect = img.getBoundingClientRect();
-                            const offsetX = event.clientX - rect.left;
-                            const offsetY = event.clientY - rect.top;
-                            let x = (offsetX / rect.width) * 2 - 1;
-                            let y = (offsetY / rect.height) * 2 - 1;
-
-                            const overlayRect = previewTd.querySelector('.overlay-rect');
-                            const overlayRectWidth = parseFloat(overlayRect.style.width);
-                            const overlayRectHeight = parseFloat(overlayRect.style.height);
-
-                            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
-                            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-
-                            updateDotPosition(previewTd, x, y);
-                        });
                     };
                     reader.readAsDataURL(file);
                 } else {
@@ -461,72 +430,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     } catch (error) {
         console.error('Error reading CSV:', error);
+        const tableBody = document.getElementById('csv-body');
+        tableBody.innerHTML = ''; // Load a blank table
     }
 
-    document.addEventListener('keydown', (event) => {
-        const activeRow = document.querySelector('.active-row');
-        if (!activeRow) return;
+    document.getElementById('save-json-button').addEventListener('click', () => {
+        const rows = document.querySelectorAll('#csv-table tr');
+        const jsonData = [];
 
-        const previewTd = activeRow.querySelector('.drop-cell.active');
-        if (!previewTd) return;
+        rows.forEach(row => {
+            const markerNumber = row.cells[0]?.textContent;
+            const markerTimecode = row.cells[1]?.textContent;
+            const caption = row.cells[2]?.textContent;
+            const filePath = row.cells[3]?.textContent;
+            const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
+            const speed = row.cells[6]?.querySelector('button')?.dataset.state;
+            const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
+            const imgWidth = row.cells[7]?.dataset.imgWidth || 1920;
+            const imgHeight = row.cells[7]?.dataset.imgHeight || 1080;
 
-        const increment = event.shiftKey ? 0.1 : 0.01;
-        let handled = false;
+            if (markerNumber !== 'Marker Number' && markerTimecode) {
+                const coordinates = clickCoordinates ? JSON.parse(clickCoordinates) : { x: 0, y: 0 };
+                jsonData.push({
+                    markerNumber,
+                    markerTimecode,
+                    caption,
+                    filePath,
+                    zoom: zoom || 'zoom_in',
+                    speed: speed || 'slow',
+                    clickCoordinates: coordinates
+                });
+            }
+        });
 
-        switch (event.key) {
-            case 'ArrowUp':
-                moveDot(previewTd, 0, -increment);
-                handled = true;
-                break;
-            case 'ArrowDown':
-                moveDot(previewTd, 0, increment);
-                handled = true;
-                break;
-            case 'ArrowLeft':
-                moveDot(previewTd, -increment, 0);
-                handled = true;
-                break;
-            case 'ArrowRight':
-                moveDot(previewTd, increment, 0);
-                handled = true;
-                break;
-        }
-
-        if (handled) {
-            event.preventDefault(); // Prevent the default action of the arrow keys (scrolling)
-        }
+        const jsonContent = JSON.stringify(jsonData, null, 2);
+        window.electron.saveJSON(jsonContent);
     });
-});
-
-document.getElementById('save-json-button').addEventListener('click', () => {
-    const rows = document.querySelectorAll('#csv-table tr');
-    const jsonData = [];
-
-    rows.forEach(row => {
-        const markerNumber = row.cells[0]?.textContent;
-        const markerTimecode = row.cells[1]?.textContent;
-        const caption = row.cells[2]?.textContent;
-        const filePath = row.cells[3]?.textContent;
-        const zoom = row.cells[5]?.querySelector('button')?.dataset.state;
-        const speed = row.cells[6]?.querySelector('button')?.dataset.state;
-        const clickCoordinates = row.cells[7]?.dataset.coordinates || '';
-        const imgWidth = row.cells[7]?.dataset.imgWidth || 1920;
-        const imgHeight = row.cells[7]?.dataset.imgHeight || 1080;
-
-        if (markerNumber !== 'Marker Number' && markerTimecode) {
-            const coordinates = clickCoordinates ? JSON.parse(clickCoordinates) : { x: 0, y: 0 };
-            jsonData.push({
-                markerNumber,
-                markerTimecode,
-                caption,
-                filePath,
-                zoom: zoom || 'zoom_in',
-                speed: speed || 'slow',
-                clickCoordinates: coordinates
-            });
-        }
-    });
-
-    const jsonContent = JSON.stringify(jsonData, null, 2);
-    window.electron.saveJSON(jsonContent);
 });

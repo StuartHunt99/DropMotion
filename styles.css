@@ -186,3 +186,40 @@ th, td {
 .active-row {
     background-color: lightblue;
 }
+
+.file-select-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.file-select-btn:hover {
+    background-color: #0056b3;
+}
+
+.file-status {
+    margin-left: 10px;
+    font-size: 20px;
+}
+
+.run-script-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.run-script-btn:hover {
+    background-color: #0056b3;
+}
