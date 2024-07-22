@@ -48,6 +48,215 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.warn('No data found in base_table.csv, loading a blank table.');
         }
 
+        function createClickDot(previewTd, tr, img) {
+            const dot = document.createElement('div');
+            dot.classList.add('click-dot');
+            dot.style.left = 'calc(50% - 30px)';
+            dot.style.top = 'calc(50% - 30px)';
+
+            const innerDot = document.createElement('div');
+            innerDot.classList.add('inner-dot');
+            dot.appendChild(innerDot);
+
+            previewTd.appendChild(dot);
+
+            dot.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                setActiveRow(tr);
+                previewTd.classList.add('active');
+                const shiftX = event.clientX - dot.getBoundingClientRect().left;
+                const shiftY = event.clientY - dot.getBoundingClientRect().top;
+
+                function moveAt(pageX, pageY) {
+                    const rect = img.getBoundingClientRect();
+                    const scrollX = window.scrollX || window.pageXOffset;
+                    const scrollY = window.scrollY || window.pageYOffset;
+
+                    let x = ((pageX - (rect.left + scrollX) - shiftX + 30) / rect.width) * 2 - 1;
+                    let y = ((pageY - (rect.top + scrollY) - shiftY + 30) / rect.height) * 2 - 1;
+
+                    const overlayRect = previewTd.querySelector('.overlay-rect');
+                    const overlayRectWidth = parseFloat(overlayRect.style.width);
+                    const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+                    x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+                    y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+                    dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
+                    dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
+
+                    const coordinates = { x, y };
+                    const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+                    clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+
+                    updateRectangleOverlay(previewTd);
+                }
+
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+
+                const onMouseUpOrLeave = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUpOrLeave);
+                    document.removeEventListener('mouseleave', onMouseUpOrLeave);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUpOrLeave);
+                document.addEventListener('mouseleave', onMouseUpOrLeave);
+            });
+
+            previewTd.addEventListener('click', (event) => {
+                setActiveRow(tr);
+                previewTd.classList.add('active');
+                const rect = img.getBoundingClientRect();
+                const offsetX = event.clientX - rect.left;
+                const offsetY = event.clientY - rect.top;
+                let x = (offsetX / rect.width) * 2 - 1;
+                let y = (offsetY / rect.height) * 2 - 1;
+
+                const overlayRect = previewTd.querySelector('.overlay-rect');
+                const overlayRectWidth = parseFloat(overlayRect.style.width);
+                const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+                x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+                y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+                updateDotPosition(previewTd, x, y);
+            });
+
+            return dot;
+        }
+
+        function updateRectangleOverlay(previewTd) {
+            const img = previewTd.querySelector('img');
+            if (!img) return;
+
+            const rect = img.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const aspectRatio = 16 / 9;
+
+            let baseWidth, baseHeight, scaledWidth, scaledHeight;
+
+            const zoomToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(6) .toggle-btn');
+            const speedToggleBtn = previewTd.closest('tr').querySelector('td:nth-child(7) .toggle-btn');
+
+            if (width / height > aspectRatio) {
+                baseHeight = height;
+                baseWidth = height * aspectRatio;
+            } else {
+                baseWidth = width;
+                baseHeight = width / aspectRatio;
+            }
+
+            if (speedToggleBtn.dataset.state === 'fast') {
+                scaledWidth = baseWidth * (1 / 2);
+                scaledHeight = scaledWidth / aspectRatio;
+            } else {
+                scaledWidth = baseWidth * (2 / 3);
+                scaledHeight = scaledWidth / aspectRatio;
+            }
+
+            const dot = previewTd.querySelector('.click-dot');
+            const dotX = dot.offsetLeft + 30;
+            const dotY = dot.offsetTop + 30;
+
+            let overlayRect = previewTd.querySelector('.overlay-rect');
+            if (!overlayRect) {
+                overlayRect = document.createElement('div');
+                overlayRect.classList.add('overlay-rect');
+                previewTd.appendChild(overlayRect);
+            }
+
+            let baseRect = previewTd.querySelector('.base-rect');
+            if (!baseRect) {
+                baseRect = document.createElement('div');
+                baseRect.classList.add('base-rect');
+                previewTd.appendChild(baseRect);
+            }
+
+            overlayRect.style.width = `${scaledWidth}px`;
+            overlayRect.style.height = `${scaledHeight}px`;
+            overlayRect.style.left = `${dotX - scaledWidth / 2}px`;
+            overlayRect.style.top = `${dotY - scaledHeight / 2}px`;
+            overlayRect.style.borderColor = speedToggleBtn.dataset.state === 'fast' ? 'red' : 'green';
+
+            baseRect.style.width = `${baseWidth}px`;
+            baseRect.style.height = `${baseHeight}px`;
+            baseRect.style.left = `calc(50% - ${baseWidth / 2}px)`;
+            baseRect.style.top = `calc(50% - ${baseHeight / 2}px)`;
+            baseRect.style.borderColor = 'white';
+        }
+
+        function removeRectangleOverlay(previewTd) {
+            const overlayRect = previewTd.querySelector('.overlay-rect');
+            if (overlayRect) {
+                overlayRect.remove();
+            }
+            const baseRect = previewTd.querySelector('.base-rect');
+            if (baseRect) {
+                baseRect.remove();
+            }
+        }
+
+        function setActiveRow(tr) {
+            document.querySelectorAll('.active-row').forEach(row => {
+                row.classList.remove('active-row');
+            });
+            tr.classList.add('active-row');
+        }
+
+        function moveDot(previewTd, dx, dy) {
+            const img = previewTd.querySelector('img');
+            if (!img) return;
+
+            const dot = previewTd.querySelector('.click-dot');
+            const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+            const overlayRect = previewTd.querySelector('.overlay-rect');
+
+            let x = parseFloat(dot.style.left.replace('calc(', '').replace('%) - 30px)', '')) / 50 - 1;
+            let y = parseFloat(dot.style.top.replace('calc(', '').replace('%) - 30px)', '')) / 50 - 1;
+
+            x += dx;
+            y += dy;
+
+            const rect = img.getBoundingClientRect();
+            const overlayRectWidth = parseFloat(overlayRect.style.width);
+            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+            dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
+            dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
+
+            const coordinates = { x, y };
+            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+            updateRectangleOverlay(previewTd);
+        }
+
+        function updateDotPosition(previewTd, x, y) {
+            const coordinates = { x, y };
+            const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
+            clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
+
+            const dot = previewTd.querySelector('.click-dot');
+            const rect = previewTd.querySelector('img').getBoundingClientRect();
+            const overlayRect = previewTd.querySelector('.overlay-rect');
+            const overlayRectWidth = parseFloat(overlayRect.style.width);
+            const overlayRectHeight = parseFloat(overlayRect.style.height);
+
+            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
+            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
+
+            dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
+            dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
+
+            updateRectangleOverlay(previewTd);
+        }
+
         results.forEach(row => {
             const tr = document.createElement('tr');
 
@@ -185,80 +394,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             previewTd.classList.add('active');
                         });
 
-                        const dot = createClickDot(previewTd);
-                        dot.classList.add('click-dot');
-                        dot.style.left = 'calc(50% - 30px)';
-                        dot.style.top = 'calc(50% - 30px)';
+                        const dot = createClickDot(previewTd, tr, img);
                         previewTd.appendChild(dot);
-
-                        dot.addEventListener('mousedown', (event) => {
-                            event.preventDefault();
-                            setActiveRow(tr);
-                            previewTd.classList.add('active');
-                            const shiftX = event.clientX - dot.getBoundingClientRect().left;
-                            const shiftY = event.clientY - dot.getBoundingClientRect().top;
-
-                            function moveAt(pageX, pageY) {
-                                const rect = img.getBoundingClientRect();
-
-                                const scrollX = window.scrollX || window.pageXOffset;
-                                const scrollY = window.scrollY || window.pageYOffset;
-
-                                let x = ((pageX - (rect.left + scrollX) - shiftX + 30) / rect.width) * 2 - 1;
-                                let y = ((pageY - (rect.top + scrollY) - shiftY + 30) / rect.height) * 2 - 1;
-
-                                const overlayRect = previewTd.querySelector('.overlay-rect');
-                                const overlayRectWidth = parseFloat(overlayRect.style.width);
-                                const overlayRectHeight = parseFloat(overlayRect.style.height);
-
-                                // Apply boundary constraints to ensure the dot stays within the image bounds
-                                x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
-                                y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-
-                                dot.style.left = `calc(${(x + 1) * 50}% - 30px)`;
-                                dot.style.top = `calc(${(y + 1) * 50}% - 30px)`;
-
-                                // Store the coordinates in the closest hidden-cell for later use
-                                const coordinates = { x, y };
-                                const clickCoordinatesTd = previewTd.closest('tr').querySelector('td.hidden-cell');
-                                clickCoordinatesTd.dataset.coordinates = JSON.stringify(coordinates);
-
-                                updateRectangleOverlay(previewTd);
-                            }
-
-                            function onMouseMove(event) {
-                                moveAt(event.pageX, event.pageY);
-                            }
-
-                            const onMouseUpOrLeave = () => {
-                                document.removeEventListener('mousemove', onMouseMove);
-                                document.removeEventListener('mouseup', onMouseUpOrLeave);
-                                document.removeEventListener('mouseleave', onMouseUpOrLeave);
-                            };
-
-                            document.addEventListener('mousemove', onMouseMove);
-                            document.addEventListener('mouseup', onMouseUpOrLeave);
-                            document.addEventListener('mouseleave', onMouseUpOrLeave);
-                        });
-
-                        previewTd.addEventListener('click', (event) => {
-                            setActiveRow(tr);
-                            previewTd.classList.add('active');
-                            const rect = img.getBoundingClientRect();
-                            const offsetX = event.clientX - rect.left;
-                            const offsetY = event.clientY - rect.top;
-                            let x = (offsetX / rect.width) * 2 - 1;
-                            let y = (offsetY / rect.height) * 2 - 1;
-
-                            const overlayRect = previewTd.querySelector('.overlay-rect');
-                            const overlayRectWidth = parseFloat(overlayRect.style.width);
-                            const overlayRectHeight = parseFloat(overlayRect.style.height);
-
-                            x = Math.max((-rect.width + overlayRectWidth) / rect.width, Math.min((rect.width - overlayRectWidth) / rect.width, x));
-                            y = Math.max((-rect.height + overlayRectHeight) / rect.height, Math.min((rect.height - overlayRectHeight) / rect.height, y));
-
-                            updateDotPosition(previewTd, x, y);
-                        });
                     };
                     reader.readAsDataURL(file);
                 } else {
